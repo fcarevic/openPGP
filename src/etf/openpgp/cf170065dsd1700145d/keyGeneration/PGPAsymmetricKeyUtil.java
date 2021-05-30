@@ -48,7 +48,7 @@ public class PGPAsymmetricKeyUtil {
 
     private void addSCKeyRingToSCRingCollection(PGPSecretKeyRing pgpSecretKeyRing) {
         if (pgpSecretKeyRing == null) return;
-        PGPSecretKeyRingCollection.addSecretKeyRing(pgpSecretKeyRingCollection, pgpSecretKeyRing);
+        pgpSecretKeyRingCollection= PGPSecretKeyRingCollection.addSecretKeyRing(pgpSecretKeyRingCollection, pgpSecretKeyRing);
     }
 
     public boolean generateNewKeyRing(String userName, String userMail, String userPassword, String algorithm, int keySize) {
@@ -112,7 +112,6 @@ public class PGPAsymmetricKeyUtil {
 
             pgpSecretKeyIterator.next();
             PGPSecretKey pgpSecretKey = pgpSecretKeyIterator.next();
-
             if (pgpSecretKey.getKeyID() == publicKeyID) {
                 return pgpSecretKeyRing;
             }

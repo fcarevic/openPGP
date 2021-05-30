@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.SecureRandom;
 import java.util.Date;
+import java.util.Iterator;
 
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.bcpg.BCPGOutputStream;
@@ -65,8 +66,8 @@ public class PGPServicesUtil {
 		
 	}
 	
-	public static InputStream decodeRadix64(InputStream data) throws IOException {
-		 return PGPUtil.getDecoderStream(data);
+	public static byte[] decodeRadix64(byte[] data) throws IOException {
+		 return PGPUtil.getDecoderStream(new ByteArrayInputStream(data)).readAllBytes();
 		
 	}
 	
@@ -82,12 +83,12 @@ public class PGPServicesUtil {
 	        return compressedData;
 	    }
 	 
-	 public static InputStream decompress(InputStream data) throws Exception {
+	 public static byte[] decompress(byte[] data) throws Exception {
 
 		 JcaPGPObjectFactory pgpFactory = new JcaPGPObjectFactory(data);
 		    Object object  =pgpFactory.nextObject();
 		    if(!(object instanceof PGPCompressedData)) throw new Exception("Unable to decompress message");
-		    return ((PGPCompressedData) object).getDataStream();
+		    return ((PGPCompressedData) object).getDataStream().readAllBytes();
 	 }
 	 
 	 
@@ -111,7 +112,7 @@ public class PGPServicesUtil {
 	        return ((ByteArrayOutputStream)outputStream).toByteArray();
 	 }
 	 
-	 public static InputStream decrypt(InputStream data, char[] password) throws Exception {
+	 public static byte[] decrypt(byte[] data, char[] password) throws Exception {
 		 
 	
 			JcaPGPObjectFactory objectFactory = new JcaPGPObjectFactory(data);
@@ -138,11 +139,12 @@ public class PGPServicesUtil {
 		            	
 		        		PGPPrivateKey privateKey = secretKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder()
 								.setProvider("BC").build(password));
-				
-		            	
+		        			System.out.println("Decrypt Private extracted wanted id:\t"+privateKey.getKeyID());
+		        			System.out.println("Decrypt Private Secret NONEXTRACTED wanted id:\t"+secretKey.getKeyID());
+			            	
 		            	  PublicKeyDataDecryptorFactory dataDecryptorFactory = new JcePublicKeyDataDecryptorFactoryBuilder().setProvider("BC").build(privateKey);
 		                  InputStream decryptedStream = pbe.getDataStream(dataDecryptorFactory);
-		            	return decryptedStream;
+		            	return decryptedStream.readAllBytes();
 		            }
 		            else
 		            {
@@ -155,8 +157,7 @@ public class PGPServicesUtil {
 		 
 	 }
 	 
-	 public static boolean verifySignature(InputStream data) throws Exception {
-		 data = new ByteArrayInputStream(data.readAllBytes());
+	 public static boolean verifySignature(byte[] data) throws Exception {
 		 JcaPGPObjectFactory objectFactory = new JcaPGPObjectFactory(data);
 			Object object= objectFactory.nextObject();
 			
@@ -194,17 +195,15 @@ public class PGPServicesUtil {
             PGPSignature signature = signatureList.get(0);
 
             if (onePassSignature.verify(signature)) {
-            	System.out.println("Ovde");
+            	System.out.println("Received message from: "+getPublicMasterKeyByID(keyId).getUserIDs().next());
             		return true;
             }
             else
             {
-            	System.out.println("Ovde1");
             	throw new Exception("Verification failed, signature integrity corrupted");
             	
             }
 		}
-		System.out.println("Ovde2");
 		throw new Exception("Verification error");
 	 }
 
@@ -252,27 +251,29 @@ public class PGPServicesUtil {
 	 
 
 	 
-	 private static PGPPublicKey getPublicKeyByID(long keyId) {
-		try {
-			return PGPKeyTools.getPublicKeysCollection().getPublicKey(keyId);
-		} catch (PGPException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+	 private static PGPPublicKey getPublicKeyByID(long id) {
+		 System.out.println("Public wanted id(verify signing):\t"+id);
+			PGPSecretKeyRing secrRing= PGPMessageSenderDriver.util.getSCKeyRingFromSCKeyRingCollection(id);
+			Iterator<PGPPublicKey> iterPublic =secrRing.getPublicKeys();
+			iterPublic.next();
+			
+			return iterPublic.next();
+		
+	 }
+	 
+	 private static PGPPublicKey getPublicMasterKeyByID(long id) {
+		 PGPSecretKeyRing secrRing= PGPMessageSenderDriver.util.getSCKeyRingFromSCKeyRingCollection(id);
+			Iterator<PGPPublicKey> iterPublic =secrRing.getPublicKeys();
+			return iterPublic.next();
+			
+		 
 	 }
 	 
 	 private static PGPSecretKeyRing getPrivateKeyRing(long id) {
-		 PGPSecretKey pgpSec;
-		try {
-			return  PGPKeyTools.getSecretKeysCollection().getSecretKeyRing(id);
-			 
-		} catch (PGPException | IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		 System.out.println("PRIVATE WANTED (decrypt): \t" + id);
+		return PGPMessageSenderDriver.util.getSCKeyRingFromSCKeyRingCollection(id);
 
-			return null;
+			
 		 }
 	 
 	 public static void main(String [] args) {
@@ -283,8 +284,8 @@ public class PGPServicesUtil {
 			IOUtil.writeToFile("srpski-compressed.txt", data);
 			
 			 data = IOUtil.readFromFile("srpski-compressed.txt");
-			 data = decodeRadix64(new ByteArrayInputStream(data)).readAllBytes();
-			 data = decompress(new ByteArrayInputStream(data)).readAllBytes();
+			 data = decodeRadix64(data);
+			 data = decompress((data));
 			 IOUtil.writeToFile("srpski-decompressed.txt", data);
 				
 			

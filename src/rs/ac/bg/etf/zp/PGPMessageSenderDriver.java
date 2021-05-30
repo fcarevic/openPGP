@@ -3,10 +3,13 @@ package rs.ac.bg.etf.zp;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.Security;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.bouncycastle.bcpg.CompressionAlgorithmTags;
 import org.bouncycastle.jcajce.provider.asymmetric.RSA;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPKeyPair;
@@ -22,9 +25,12 @@ import org.bouncycastle.openpgp.operator.PublicKeyDataDecryptorFactory;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyDataDecryptorFactoryBuilder;
 
+import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPAsymmetricKeyUtil;
 import om160246d.PGPKeyTools;
 
 public class PGPMessageSenderDriver {
+	public static PGPAsymmetricKeyUtil util;
+	
 
 	private boolean requiresSignature;
 	private boolean requiresCompression;
@@ -40,6 +46,8 @@ public class PGPMessageSenderDriver {
 	
 	
 	private String password;
+	private String inputFile;
+	private String outputFile;
 
 	public void setPassword(String password) {
 		this.password=password;
@@ -108,28 +116,45 @@ public class PGPMessageSenderDriver {
 	}
 	
 	public byte[] encrypt() throws PGPException, IOException {
-		byte [] processedData= this.data;
 		if(requiresSignature) 
-			processedData=PGPServicesUtil.sign(processedData, signingKey, signingAlgorithm);
+			this.data=PGPServicesUtil.sign(this.data, signingKey, signingAlgorithm);
 		if(requiresCompression)
-			processedData = PGPServicesUtil.compress(processedData, compressionAlgorithm);
+			this.data= PGPServicesUtil.compress(this.data, compressionAlgorithm);
 		if(requiresEncryption)
-			processedData=PGPServicesUtil.encrypt(processedData, encryptionKey, encryptionAlgorithm);
+			this.data=PGPServicesUtil.encrypt(this.data, encryptionKey, encryptionAlgorithm);
 		if(requiresRadix64)
-			processedData= PGPServicesUtil.encodeRadix64(processedData);
-		return processedData;
+			this.data= PGPServicesUtil.encodeRadix64(this.data);
+		return 	this.data;
 	}
 	
-	public byte[] decrypt() throws Exception {
-		InputStream in = new ByteArrayInputStream(data);
-		in=PGPServicesUtil.decodeRadix64(in);
-		in= PGPServicesUtil.decrypt(in, password.toCharArray());
-		in=PGPServicesUtil.decompress(in);
-		byte savedData[] = in.readAllBytes();
-		byte[] cloned = savedData.clone();
-//		cloned[456]=12;
-		PGPServicesUtil.verifySignature(new ByteArrayInputStream(cloned)); //puca exception ako nije zadovojeno
-		return savedData;
+	public byte[] decrypt()  {
+		try {
+		
+			data=PGPServicesUtil.decodeRadix64(data);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+		}
+		try {
+			data= PGPServicesUtil.decrypt(data, password.toCharArray());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+		}
+
+		try {
+			data=PGPServicesUtil.decompress(data);
+		} catch (Exception e) {
+			ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+		}
+		
+		try {
+			PGPServicesUtil.verifySignature(data);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			ErrorReportUtil.reportError(e);
+		} //puca exception ako nije zadovojeno
+		return data;
 	}
 	
 	
@@ -137,50 +162,58 @@ public class PGPMessageSenderDriver {
 	
 	public void processMessage(String inputFile, String outputFile, boolean encrypt) {
 		try {
+			this.inputFile=inputFile;
+			this.outputFile=outputFile;
 			this.data = IOUtil.readFromFile(inputFile);
 			byte[] processedData= encrypt? encrypt(): decrypt();
 			IOUtil.writeToFile(outputFile, processedData);
 		} catch ( Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			ErrorReportUtil.reportError(e);
+			ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+			
 		}
 		
 	}
 	
 	public static void main(String [] args) {
 		
-		String name1 = "Nikola Vucenovic <nikolavucenovic97@gmail.com>";
+		String name1 = "Nikola Vucenovic";
+		String mail1 = " <nikolavucenovic97@gmail.com>";
 		String password1 = "Sifra123";
-		String name2 = "Milo Tomasevic <milo@gmail.com>";
+		String name2 = "Milo Tomasevic";
+		String mail2= "<milo@gmail.com>";
 		String password2 = "Sifra123";
 		
 		
-		PGPKeyRingGenerator pgpKeyRingGenerator1;
+	
 		try {
-			pgpKeyRingGenerator1 = PGPKeyTools.createPGPKeyRingGenerator(PGPKeyTools.generateDsaKeyPair(1024), PGPKeyTools.generateElGamalKeyPair(1024), name1, password1.toCharArray());
-		
-			PGPKeyRingGenerator pgpKeyRingGenerator2 = PGPKeyTools.createPGPKeyRingGenerator(PGPKeyTools.generateDsaKeyPair(1024), PGPKeyTools.generateElGamalKeyPair(1024), name2, password2.toCharArray());
-
-			PGPKeyTools.addPublicKey(pgpKeyRingGenerator1);
-			PGPKeyTools.addSecretKey(pgpKeyRingGenerator1);
+			Security.addProvider(new BouncyCastleProvider());
+			util =   new PGPAsymmetricKeyUtil();;
+			util.generateNewKeyRing(name1, mail1, password1, "DSA", 1024);
+			util.generateNewKeyRing(name2, mail2, password2, "ELGAMAL", 1024);
 			
-			int alg = PGPEncryptedData.IDEA;
+			PGPSecretKeyRing singatureRing = util.getSecretKeyRings().get(0);
+			PGPSecretKeyRing encRing = util.getSecretKeyRings().get(1);
+			
+			Iterator<PGPPublicKey> iterPublic =encRing.getPublicKeys();
+			iterPublic.next();
+			
+			PGPPublicKey publicKey= iterPublic.next();
+			
+						
+			int alg = PGPEncryptedData.TRIPLE_DES;
 			
 			PGPMessageSenderDriver ms = new PGPMessageSenderDriver();
-			PGPPublicKeyRingCollection publicKeyRingColl = PGPKeyTools.getPublicKeysCollection();
+		
 			
-			PGPPublicKeyRing pbRing=publicKeyRingColl.getKeyRings().next();
-			Iterator<PGPPublicKey> iter = pbRing.getPublicKeys();
-			iter.next();
-			PGPPublicKey publicKey = iter.next();
 			ms.setRequiresCompression(true);
 			ms.setRequiresRadix64(true);
-			ms.configEncryption(true,  PGPEncryptedData.IDEA, publicKey);
+			ms.configEncryption(true,  alg, publicKey);
+			System.out.println("Public encrypt id:\t"+ publicKey.getKeyID());
 			
-			PGPSecretKeyRingCollection privCol = PGPKeyTools.getSecretKeysCollection();
-			Iterator<PGPSecretKeyRing> privIter = privCol.getKeyRings();
-			PGPSecretKeyRing privateKeyRing = privIter.next();
+			
+			PGPSecretKeyRing privateKeyRing = singatureRing;
 	            //TODO DOHVATANJE RINGA KLJUCEVA
 			PGPPrivateKey privateKey=null; 
 			int signAlg=1;
@@ -189,21 +222,23 @@ public class PGPMessageSenderDriver {
 	            	java.util.Iterator<PGPSecretKey> iterPriv = privateKeyRing.getSecretKeys();
 	            	PGPSecretKey masterKey = iterPriv.next();
 	            	PGPSecretKey secretKey = iterPriv.next();
+	            	System.out.println("Secret sign id:\t"+secretKey.getKeyID());
 	            	System.out.println(masterKey.isSigningKey());
-	            	signAlg=masterKey.getPublicKey().getAlgorithm();
+	            	signAlg=secretKey.getPublicKey().getAlgorithm();
 	            	
-	        	privateKey = masterKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder()
+	        	privateKey = secretKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder()
 							.setProvider("BC").build(password1.toCharArray()));
+	            	System.out.println("Private sign id:\t"+privateKey.getKeyID());
 	            }
 			
 			
-			ms.configSignature(true, signAlg, privateKey);
+			ms.configSignature(false, signAlg, privateKey);
 			
-			
-			ms.processMessage("srpski.txt", "srpski-encrypted.txt", true);
+			String name="srpski";
+			ms.processMessage(name+".txt", name+"-encrypted.txt", true);
 			
 			ms.setPassword("Sifra123");
-			ms.processMessage("srpski-encrypted.txt", "srpski-decrypted.txt", false);
+			ms.processMessage(name+"-encrypted.txt", name+"-decrypted.txt", false);
 			System.out.println("Finished sending");
 			
 			
