@@ -52,7 +52,7 @@
                       <EmptySpace min="-2" pref="108" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="jLabel3" max="32767" attributes="0"/>
-                          <Component id="jPasswordField1" max="32767" attributes="0"/>
+                          <Component id="passwordField" max="32767" attributes="0"/>
                           <Component id="jButton5" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="107" max="-2" attributes="0"/>
@@ -65,10 +65,10 @@
                       <EmptySpace min="-2" pref="81" max="-2" attributes="0"/>
                       <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="jPasswordField1" min="-2" max="-2" attributes="0"/>
+                      <Component id="passwordField" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
                       <Component id="jButton5" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="116" max="32767" attributes="0"/>
+                      <EmptySpace pref="108" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -79,16 +79,22 @@
                 <Property name="text" type="java.lang.String" value="Type password for your private key"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JPasswordField" name="jPasswordField1">
+            <Component class="javax.swing.JPasswordField" name="passwordField">
               <Properties>
                 <Property name="text" type="java.lang.String" value="jPasswordField1"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="passwordFieldActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="jButton5">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Submit"/>
                 <Property name="focusPainted" type="boolean" value="false"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton5ActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>
@@ -136,17 +142,20 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jTabbedPane1" alignment="0" max="32767" attributes="0"/>
+          <Component id="showKeyRingCollectionPane" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jTabbedPane1" min="-2" pref="517" max="-2" attributes="0"/>
+          <Component id="showKeyRingCollectionPane" min="-2" pref="517" max="-2" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="javax.swing.JTabbedPane" name="jTabbedPane1">
+    <Container class="javax.swing.JTabbedPane" name="showKeyRingCollectionPane">
+      <Events>
+        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="showKeyRingCollectionPaneMouseClicked"/>
+      </Events>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
       <SubComponents>
@@ -298,10 +307,16 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="1024"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jRadioButton6ActionPerformed"/>
+              </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="jRadioButton6.setActionCommand(&quot;1024&quot;);"/>
+              </AuxValues>
             </Component>
             <Component class="javax.swing.JRadioButton" name="jRadioButton7">
               <Properties>
-                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor" postCode="jRadioButton7.setActionCommand(&quot;2048&quot;);">
                   <ComponentRef name="keySize"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="2048"/>
@@ -314,6 +329,9 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="4096"/>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="keySize4096RB.setActionCommand(&quot;4096&quot;);"/>
+              </AuxValues>
             </Component>
             <Component class="javax.swing.JButton" name="generateNewKeyPaitButton">
               <Properties>
@@ -338,18 +356,22 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jScrollPane1" alignment="1" pref="649" max="32767" attributes="0"/>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                  <Group type="102" alignment="1" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jRadioButton2" alignment="0" min="-2" pref="125" max="-2" attributes="0"/>
-                          <Component id="jRadioButton1" alignment="0" min="-2" pref="125" max="-2" attributes="0"/>
+                          <Component id="showPublicKeysRingRB" min="-2" pref="125" max="-2" attributes="0"/>
+                          <Component id="showSecretKeysRingRB" alignment="0" min="-2" pref="125" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="deleteKey" min="-2" pref="74" max="-2" attributes="0"/>
-                          <Component id="jButton1" min="-2" pref="74" max="-2" attributes="0"/>
+                          <Group type="102" alignment="1" attributes="0">
+                              <Component id="deleteKey" min="-2" pref="99" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="exportPU" min="-2" pref="99" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="exportPK" alignment="1" min="-2" pref="99" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -358,17 +380,18 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Component id="jScrollPane1" min="-2" pref="357" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jRadioButton1" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jRadioButton2" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="showSecretKeysRingRB" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="exportPU" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="deleteKey" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="showPublicKeysRingRB" min="-2" max="-2" attributes="0"/>
+                          <Component id="exportPK" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace pref="40" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -381,10 +404,10 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
               <SubComponents>
-                <Component class="javax.swing.JTable" name="keyRing">
+                <Component class="javax.swing.JTable" name="keyRingTable">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                      <Connection code="new javax.swing.table.DefaultTableModel(&#xa;    new Object [][] {&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},{null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},{null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},{null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null}&#xa;&#xa;    },&#xa;    new String [] {&#xa;        &quot;Name&quot;, &quot;Email&quot;, &quot;PU key ID&quot;, &quot;Algorithm&quot;, &quot;Timestamp&quot;,&#xa;    }&#xa;)" type="code"/>
+                      <Connection code="new javax.swing.table.DefaultTableModel(&#xa;    new Object [][] {&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},{null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},{null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},{null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null},&#xa;        {null, null, null, null, null}&#xa;&#xa;    },&#xa;  columNameString&#xa;)" type="code"/>
                     </Property>
                     <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
                       <Color id="Default Cursor"/>
@@ -397,26 +420,36 @@
                 </Component>
               </SubComponents>
             </Container>
-            <Component class="javax.swing.JRadioButton" name="jRadioButton1">
+            <Component class="javax.swing.JRadioButton" name="showSecretKeysRingRB">
               <Properties>
                 <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                   <ComponentRef name="showKeyRing"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Secret key ring"/>
+                <Property name="actionCommand" type="java.lang.String" value=""/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showSecretKeysRingRBActionPerformed"/>
+              </Events>
             </Component>
-            <Component class="javax.swing.JRadioButton" name="jRadioButton2">
+            <Component class="javax.swing.JRadioButton" name="showPublicKeysRingRB">
               <Properties>
                 <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                   <ComponentRef name="showKeyRing"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Public key ring"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showPublicKeysRingRBActionPerformed"/>
+              </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="jButton1">
+            <Component class="javax.swing.JButton" name="exportPU">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Export "/>
+                <Property name="text" type="java.lang.String" value="Export PU"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exportPUActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="deleteKey">
               <Properties>
@@ -424,6 +457,14 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteKeyActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="exportPK">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Export PK"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exportPKActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>
@@ -516,7 +557,7 @@
                               </Group>
                               <Component id="signMessageOptionPanel" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="61" max="32767" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
                           <Component id="jButton8" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="60" max="-2" attributes="0"/>
                       </Group>
@@ -625,7 +666,7 @@
 
                       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                       <SubComponents>
-                        <Component class="javax.swing.JList" name="jList1">
+                        <Component class="javax.swing.JList" name="publicKeyList">
                           <Properties>
                             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
                               <StringArray count="5">
@@ -665,48 +706,62 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jComboBox1" alignment="1" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jLabel9" pref="213" max="32767" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="81" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Component id="jLabel9" pref="213" max="32767" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="jScrollPane3" max="32767" attributes="0"/>
+                              </Group>
                           </Group>
                       </Group>
                     </DimensionLayout>
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
+                          <Group type="102" attributes="0">
                               <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                               <Component id="jLabel9" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="jComboBox1" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="20" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="jScrollPane3" min="-2" pref="82" max="-2" attributes="0"/>
+                              <EmptySpace pref="40" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
                   </Layout>
                   <SubComponents>
-                    <Component class="javax.swing.JComboBox" name="jComboBox1">
-                      <Properties>
-                        <Property name="maximumRowCount" type="int" value="2"/>
-                        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                          <StringArray count="4">
-                            <StringItem index="0" value="Item 1"/>
-                            <StringItem index="1" value="Item 2"/>
-                            <StringItem index="2" value="Item 3"/>
-                            <StringItem index="3" value="Item 4"/>
-                          </StringArray>
-                        </Property>
-                      </Properties>
-                      <AuxValues>
-                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
-                      </AuxValues>
-                    </Component>
                     <Component class="javax.swing.JLabel" name="jLabel9">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Choose private key for sign"/>
                       </Properties>
                     </Component>
+                    <Container class="javax.swing.JScrollPane" name="jScrollPane3">
+                      <AuxValues>
+                        <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+                      </AuxValues>
+
+                      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                      <SubComponents>
+                        <Component class="javax.swing.JList" name="secretKeyList">
+                          <Properties>
+                            <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
+                              <StringArray count="5">
+                                <StringItem index="0" value="Item 1"/>
+                                <StringItem index="1" value="Item 2"/>
+                                <StringItem index="2" value="Item 3"/>
+                                <StringItem index="3" value="Item 4"/>
+                                <StringItem index="4" value="Item 5"/>
+                              </StringArray>
+                            </Property>
+                            <Property name="selectionMode" type="int" value="0"/>
+                          </Properties>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                          </AuxValues>
+                        </Component>
+                      </SubComponents>
+                    </Container>
                   </SubComponents>
                 </Container>
                 <Component class="javax.swing.JCheckBox" name="jCheckBox1">
@@ -781,6 +836,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Choose message destination"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton7ActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="jButton9">
               <Properties>

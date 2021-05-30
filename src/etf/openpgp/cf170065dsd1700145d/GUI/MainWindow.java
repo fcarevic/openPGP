@@ -6,17 +6,23 @@ import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPKeyInfo;
 import java.awt.font.NumericShaper;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openpgp.PGPEncryptedData;
+import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKey;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
+import rs.ac.bg.etf.zp.PGPMessageSenderDriver;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -63,6 +69,7 @@ public class MainWindow extends javax.swing.JFrame {
         chooseMessageSourceFC = new javax.swing.JFileChooser();
         chooseMessageDestinationFC = new javax.swing.JFileChooser();
         jComboBox2 = new javax.swing.JComboBox<>();
+        encrAlgoGroup = new javax.swing.ButtonGroup();
         showKeyRingCollectionPane = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         userNameTF = new javax.swing.JTextField();
@@ -107,8 +114,8 @@ public class MainWindow extends javax.swing.JFrame {
         jLabel9 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         secretKeyList = new javax.swing.JList<>();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jCheckBox2 = new javax.swing.JCheckBox();
+        compressionCheckbox = new javax.swing.JCheckBox();
+        radixCheckbox = new javax.swing.JCheckBox();
         jButton8 = new javax.swing.JButton();
         jPanel6 = new javax.swing.JPanel();
         jButton6 = new javax.swing.JButton();
@@ -466,28 +473,32 @@ public class MainWindow extends javax.swing.JFrame {
 
         jLabel4.setText("Choose keys from public ring for encryption");
 
+        encrAlgoGroup.add(jRadioButton3);
         jRadioButton3.setText("3DES with EDE configuration");
+        jRadioButton3.setActionCommand("3DES");
 
+        encrAlgoGroup.add(jRadioButton4);
+        jRadioButton4.setSelected(true);
         jRadioButton4.setText("IDEA");
+        jRadioButton4.setActionCommand("IDEA");
 
         javax.swing.GroupLayout encrytpionMessageOptionPanelLayout = new javax.swing.GroupLayout(encrytpionMessageOptionPanel);
         encrytpionMessageOptionPanel.setLayout(encrytpionMessageOptionPanelLayout);
         encrytpionMessageOptionPanelLayout.setHorizontalGroup(
             encrytpionMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(encrytpionMessageOptionPanelLayout.createSequentialGroup()
-                .addGroup(encrytpionMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jRadioButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(encrytpionMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)
-                        .addComponent(jScrollPane2)))
-                .addGap(0, 0, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, encrytpionMessageOptionPanelLayout.createSequentialGroup()
-                .addGroup(encrytpionMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, encrytpionMessageOptionPanelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jRadioButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(encrytpionMessageOptionPanelLayout.createSequentialGroup()
+                .addGroup(encrytpionMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(jRadioButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jRadioButton3, javax.swing.GroupLayout.DEFAULT_SIZE, 225, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, encrytpionMessageOptionPanelLayout.createSequentialGroup()
+                        .addGap(4, 4, 4)
+                        .addGroup(encrytpionMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, 221, Short.MAX_VALUE)
+                            .addComponent(jScrollPane2))))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         encrytpionMessageOptionPanelLayout.setVerticalGroup(
             encrytpionMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -537,16 +548,21 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap(40, Short.MAX_VALUE))
         );
 
-        jCheckBox1.setText("Compresion(with ZIP)");
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+        compressionCheckbox.setText("Compression(with ZIP)");
+        compressionCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
+                compressionCheckboxActionPerformed(evt);
             }
         });
 
-        jCheckBox2.setText("Conversion(radix64)");
+        radixCheckbox.setText("Conversion(radix64)");
 
         jButton8.setText("Send message");
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -557,8 +573,8 @@ public class MainWindow extends javax.swing.JFrame {
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel7Layout.createSequentialGroup()
                         .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jCheckBox2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jCheckBox1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(radixCheckbox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(compressionCheckbox, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(signMessageOptionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel7Layout.createSequentialGroup()
@@ -570,7 +586,7 @@ public class MainWindow extends javax.swing.JFrame {
                                 .addComponent(chooseMessageSourceButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(chooseMessageDestinationButton, javax.swing.GroupLayout.DEFAULT_SIZE, 225, Short.MAX_VALUE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(encrytpionMessageOptionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 225, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(encrytpionMessageOptionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(35, 35, 35))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
                 .addContainerGap(171, Short.MAX_VALUE)
@@ -596,9 +612,9 @@ public class MainWindow extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addComponent(jCheckBox2)
+                        .addComponent(radixCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCheckBox1))
+                        .addComponent(compressionCheckbox))
                     .addComponent(signMessageOptionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButton8)
@@ -619,6 +635,11 @@ public class MainWindow extends javax.swing.JFrame {
         showKeyRingCollectionPane.addTab("Send message", jPanel5);
 
         jButton6.setText("Choose message source");
+        jButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton6ActionPerformed(evt);
+            }
+        });
 
         jButton7.setText("Choose message destination");
         jButton7.addActionListener(new java.awt.event.ActionListener() {
@@ -628,6 +649,11 @@ public class MainWindow extends javax.swing.JFrame {
         });
 
         jButton9.setText("Receive message");
+        jButton9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton9ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -812,7 +838,17 @@ public class MainWindow extends javax.swing.JFrame {
         return userPassword;
     }
 
+    private String getSelectedFilePath(JFileChooser fileChooser) {
+        String path = fileChooser.getSelectedFile().getAbsolutePath();
+        System.out.println(path);
+        return path;
+    }
+
     private String getSelectedFile() {
+        return this.getSelectedFile(this.fileChooser);
+    }
+
+    private String getSelectedFile(JFileChooser fileChooser) {
         int result = fileChooser.showOpenDialog(null);
         if (result != JFileChooser.APPROVE_OPTION) {
             GUIUtil.showErrorMessage("File not selectedl");
@@ -860,9 +896,9 @@ public class MainWindow extends javax.swing.JFrame {
 
     }//GEN-LAST:event_encryptCBActionPerformed
 
-    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+    private void compressionCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_compressionCheckboxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jCheckBox1ActionPerformed
+    }//GEN-LAST:event_compressionCheckboxActionPerformed
 
     private void chooseMessageDestinationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chooseMessageDestinationButtonActionPerformed
         chooseMessageDestinationFC.showOpenDialog(null);
@@ -987,7 +1023,7 @@ public class MainWindow extends javax.swing.JFrame {
     }//GEN-LAST:event_showKeyRingCollectionPaneMouseClicked
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
-        // TODO add your handling code here:
+        chooseMessageDestinationFC.showOpenDialog(null);        // TODO add your handling code here:
     }//GEN-LAST:event_jButton7ActionPerformed
 
     private void exportKeyFromSpecificKeyRingCollection(long keyID, String path) {
@@ -1039,6 +1075,111 @@ public class MainWindow extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_exportPKActionPerformed
 
+    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+        // TODO add your handling code here:
+        chooseMessageSourceFC.showOpenDialog(null);
+    }//GEN-LAST:event_jButton6ActionPerformed
+
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        // TODO add your handling code here:
+        try {
+            boolean requiresRadix = radixCheckbox.isSelected();
+            boolean requiresEncryption = encryptCB.isSelected();
+            boolean requiresCompression = compressionCheckbox.isSelected();
+            boolean requiresSignature = signCB.isSelected();
+            String encrAlgorithmString = encrAlgoGroup.getSelection().getActionCommand();
+            String password = "";
+            if (requiresSignature) {
+                password = getUserPassword();
+            }
+            int encryptionAlgorithm = PGPEncryptedData.IDEA;
+            if (encrAlgorithmString.contains("3DES")) {
+                encryptionAlgorithm = PGPEncryptedData.TRIPLE_DES;
+            }
+            PGPMessageSenderDriver.util = pGPAsymmetricKeyUtil;
+
+            long privateKeyID = Long.parseLong(secretKeyList.getSelectedValue());
+            System.out.println("Private key ID: " + privateKeyID);
+
+            List<Long> publicKeyIDs = new LinkedList<>();
+            publicKeyList.getSelectedValuesList().forEach(s -> {
+                publicKeyIDs.add(Long.parseLong(s));
+                System.out.println("Public Key ID: " + Long.parseLong(s));
+            });
+            if (publicKeyIDs.isEmpty()) {
+                GUIUtil.showErrorMessage("Public keys not selected");
+                return;
+            }
+
+            String inputFile = getSelectedFilePath(chooseMessageSourceFC);
+            String outputFile = getSelectedFilePath(chooseMessageDestinationFC);
+            if (inputFile.length() == 0 || outputFile.length() == 0) {
+                return;
+            }
+
+            PGPMessageSenderDriver msgDriver = new PGPMessageSenderDriver();
+            msgDriver.setRequiresCompression(requiresCompression);
+            msgDriver.setRequiresRadix64(requiresRadix);
+            msgDriver.setPassword(password);
+            msgDriver.configEncryption(requiresEncryption, publicKeyIDs, encryptionAlgorithm);
+            try{
+            msgDriver.configSignature(requiresSignature, privateKeyID);
+            } catch (PGPException e){
+                GUIUtil.showErrorMessage("Wrong key password");
+                return;
+            }
+            msgDriver.encryptMessage(inputFile, outputFile);
+            
+            GUIUtil.showInfoMessage("Message created");
+        } catch (Exception e) {
+            GUIUtil.showErrorMessage("Error while parsing input data and parameters");
+            e.printStackTrace();
+        }
+
+
+    }//GEN-LAST:event_jButton8ActionPerformed
+
+    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+        // TODO add your handling code here:
+        PGPMessageSenderDriver.util = pGPAsymmetricKeyUtil;
+        String inputFile = getSelectedFilePath(chooseMessageSourceFC);
+        String outputFile = getSelectedFilePath(chooseMessageDestinationFC);
+        PGPMessageSenderDriver msgDriver = new PGPMessageSenderDriver();
+        if (inputFile.length() == 0 || outputFile.length() == 0) {
+            return;
+        }
+        msgDriver.setInputFile(inputFile);
+        msgDriver.setOutputFile(outputFile);
+        msgDriver.readFileToDecrypt(inputFile);
+        
+        msgDriver.decodeDecryptoinPhase();
+        
+        boolean incorrectPassword = false;
+        msgDriver.setPassword("");
+        do {
+                incorrectPassword = false;
+            try {
+                msgDriver.decryptDecryptionPhase();
+            } catch (PGPException ex) {
+                incorrectPassword=true;
+               String password= getUserPassword();
+               if(password==null) return;
+               msgDriver.setPassword(password);
+            }
+        } while (incorrectPassword);
+
+        msgDriver.decompressDecryptionPhase();
+        msgDriver.verifySignatureDecriptionPhase();
+        String messageAuthor = msgDriver.getMessageAuthor();
+        if (messageAuthor == null) {
+            GUIUtil.showInfoMessage("Received unsigned message");
+        } else {
+            GUIUtil.showInfoMessage("Received signed message from " + messageAuthor);
+        }
+        msgDriver.writeToFileDecrypted(outputFile);
+
+    }//GEN-LAST:event_jButton9ActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1089,9 +1230,11 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JFileChooser chooseMessageDestinationFC;
     private javax.swing.JButton chooseMessageSourceButton;
     private javax.swing.JFileChooser chooseMessageSourceFC;
+    private javax.swing.JCheckBox compressionCheckbox;
     private javax.swing.JButton deleteKey;
     private javax.swing.JRadioButton dsaRB;
     private javax.swing.JRadioButton elGamalRB;
+    private javax.swing.ButtonGroup encrAlgoGroup;
     private javax.swing.JCheckBox encryptCB;
     private javax.swing.JPanel encrytpionMessageOptionPanel;
     private javax.swing.JButton exportPK;
@@ -1105,8 +1248,6 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
     private javax.swing.JButton jButton9;
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JCheckBox jCheckBox2;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -1138,6 +1279,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPasswordField passwordField;
     private javax.swing.JDialog passwordRequestDialog;
     private javax.swing.JList<String> publicKeyList;
+    private javax.swing.JCheckBox radixCheckbox;
     private javax.swing.JList<String> secretKeyList;
     private javax.swing.ButtonGroup showKeyRing;
     private javax.swing.JTabbedPane showKeyRingCollectionPane;

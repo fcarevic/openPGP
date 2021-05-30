@@ -6,6 +6,7 @@ public class ErrorReportUtil {
 	
 	public static void reportError(Exception e) {
 		System.err.println(e.toString());
+                e.printStackTrace();;
 	}
 
 	public static void reportError(String message) {
