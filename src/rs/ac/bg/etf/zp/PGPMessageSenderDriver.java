@@ -3,10 +3,13 @@ package rs.ac.bg.etf.zp;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.Security;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.bouncycastle.bcpg.CompressionAlgorithmTags;
 import org.bouncycastle.jcajce.provider.asymmetric.RSA;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPKeyPair;
@@ -22,204 +25,282 @@ import org.bouncycastle.openpgp.operator.PublicKeyDataDecryptorFactory;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyDataDecryptorFactoryBuilder;
 
-import om160246d.PGPKeyTools;
+import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPAsymmetricKeyUtil;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PGPMessageSenderDriver {
 
-	private boolean requiresSignature;
-	private boolean requiresCompression;
-	private boolean requiresEncryption;
-	private boolean requiresRadix64;
-	private byte[] data;
-	private PGPPrivateKey signingKey;
-	private int signingAlgorithm;
-	private PGPPublicKey encryptionKey;
-	private int encryptionAlgorithm;
-	private int compressionAlgorithm = CompressionAlgorithmTags.ZIP;
-	
-	
-	
-	private String password;
+    public static PGPAsymmetricKeyUtil util;
 
-	public void setPassword(String password) {
-		this.password=password;
-	}
-	
-	public boolean isRequiresSignature() {
-		return requiresSignature;
-	}
-	
-	
+    private boolean requiresSignature;
+    private boolean requiresCompression;
+    private boolean requiresEncryption;
+    private boolean requiresRadix64;
+    private byte[] data;
+    private String messageAuthor=null;
+    private PGPPrivateKey signingKey;
+    private int signingAlgorithm;
+    private List<PGPPublicKey> encryptionKey;
+    private int encryptionAlgorithm;
+    private int compressionAlgorithm = CompressionAlgorithmTags.ZIP;
 
-	public void setRequiresSignature(boolean requiresSignature) {
-		this.requiresSignature = requiresSignature;
-	}
+    private String password;
+    private String inputFile;
+    private String outputFile;
 
-	public boolean isRequiresCompression() {
-		return requiresCompression;
-	}
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    public String getMessageAuthor(){
+        return messageAuthor;
+    }
+    public boolean isRequiresSignature() {
+        return requiresSignature;
+    }
 
-	public void setRequiresCompression(boolean requiresCompression) {
-		this.requiresCompression = requiresCompression;
-	}
+    public void setInputFile(String inputFile) {
+        this.inputFile = inputFile;
+    }
 
-	public boolean isRequiresEncryption() {
-		return requiresEncryption;
-	}
+    public void setOutputFile(String outputFile) {
+        this.outputFile = outputFile;
+    }
+    
 
-	public void setRequiresEncryption(boolean requiresEncryption) {
-		this.requiresEncryption = requiresEncryption;
-	}
+    public void setRequiresSignature(boolean requiresSignature) {
+        this.requiresSignature = requiresSignature;
+    }
 
-	public boolean isRequiresRadix64() {
-		return requiresRadix64;
-	}
+    public boolean isRequiresCompression() {
+        return requiresCompression;
+    }
 
-	public void setRequiresRadix64(boolean requiresRadix64) {
-		this.requiresRadix64 = requiresRadix64;
-	}
+    public void setRequiresCompression(boolean requiresCompression) {
+        this.requiresCompression = requiresCompression;
+    }
 
-	public byte[] getData() {
-		return data;
-	}
+    public boolean isRequiresEncryption() {
+        return requiresEncryption;
+    }
 
-	public void setData(byte[] data) {
-		this.data = data;
-	}
-	
-	
-	
-	public void configSignature(boolean isRequired, int algorithm, PGPPrivateKey signingKey) {
-		 this.requiresSignature=isRequired;
-		 this.signingKey=signingKey;
-		 this.signingAlgorithm=algorithm;
-	}
-	
-	public void configEncryption(boolean isRequired, int algorithm,PGPPublicKey encryptionKey) {
-		
-		this.requiresEncryption=isRequired;
-		this.encryptionKey=encryptionKey;
-		this.encryptionAlgorithm=algorithm;
-	}
-	
-	public void configCompression(boolean isRequired, int algorithm) {
-		this.requiresCompression=isRequired;
-		this.compressionAlgorithm=algorithm;
-	}
-	
-	public byte[] encrypt() throws PGPException, IOException {
-		byte [] processedData= this.data;
-		if(requiresSignature) 
-			processedData=PGPServicesUtil.sign(processedData, signingKey, signingAlgorithm);
-		if(requiresCompression)
-			processedData = PGPServicesUtil.compress(processedData, compressionAlgorithm);
-		if(requiresEncryption)
-			processedData=PGPServicesUtil.encrypt(processedData, encryptionKey, encryptionAlgorithm);
-		if(requiresRadix64)
-			processedData= PGPServicesUtil.encodeRadix64(processedData);
-		return processedData;
-	}
-	
-	public byte[] decrypt() throws Exception {
-		InputStream in = new ByteArrayInputStream(data);
-		in=PGPServicesUtil.decodeRadix64(in);
-		in= PGPServicesUtil.decrypt(in, password.toCharArray());
-		in=PGPServicesUtil.decompress(in);
-		byte savedData[] = in.readAllBytes();
-		byte[] cloned = savedData.clone();
-//		cloned[456]=12;
-		PGPServicesUtil.verifySignature(new ByteArrayInputStream(cloned)); //puca exception ako nije zadovojeno
-		return savedData;
-	}
-	
-	
-	
-	
-	public void processMessage(String inputFile, String outputFile, boolean encrypt) {
-		try {
-			this.data = IOUtil.readFromFile(inputFile);
-			byte[] processedData= encrypt? encrypt(): decrypt();
-			IOUtil.writeToFile(outputFile, processedData);
-		} catch ( Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			ErrorReportUtil.reportError(e);
-		}
-		
-	}
-	
-	public static void main(String [] args) {
-		
-		String name1 = "Nikola Vucenovic <nikolavucenovic97@gmail.com>";
-		String password1 = "Sifra123";
-		String name2 = "Milo Tomasevic <milo@gmail.com>";
-		String password2 = "Sifra123";
-		
-		
-		PGPKeyRingGenerator pgpKeyRingGenerator1;
-		try {
-			pgpKeyRingGenerator1 = PGPKeyTools.createPGPKeyRingGenerator(PGPKeyTools.generateDsaKeyPair(1024), PGPKeyTools.generateElGamalKeyPair(1024), name1, password1.toCharArray());
-		
-			PGPKeyRingGenerator pgpKeyRingGenerator2 = PGPKeyTools.createPGPKeyRingGenerator(PGPKeyTools.generateDsaKeyPair(1024), PGPKeyTools.generateElGamalKeyPair(1024), name2, password2.toCharArray());
+    public void setRequiresEncryption(boolean requiresEncryption) {
+        this.requiresEncryption = requiresEncryption;
+    }
 
-			PGPKeyTools.addPublicKey(pgpKeyRingGenerator1);
-			PGPKeyTools.addSecretKey(pgpKeyRingGenerator1);
-			
-			int alg = PGPEncryptedData.IDEA;
-			
-			PGPMessageSenderDriver ms = new PGPMessageSenderDriver();
-			PGPPublicKeyRingCollection publicKeyRingColl = PGPKeyTools.getPublicKeysCollection();
-			
-			PGPPublicKeyRing pbRing=publicKeyRingColl.getKeyRings().next();
-			Iterator<PGPPublicKey> iter = pbRing.getPublicKeys();
-			iter.next();
-			PGPPublicKey publicKey = iter.next();
-			ms.setRequiresCompression(true);
-			ms.setRequiresRadix64(true);
-			ms.configEncryption(true,  PGPEncryptedData.IDEA, publicKey);
-			
-			PGPSecretKeyRingCollection privCol = PGPKeyTools.getSecretKeysCollection();
-			Iterator<PGPSecretKeyRing> privIter = privCol.getKeyRings();
-			PGPSecretKeyRing privateKeyRing = privIter.next();
-	            //TODO DOHVATANJE RINGA KLJUCEVA
-			PGPPrivateKey privateKey=null; 
-			int signAlg=1;
-	            if (privateKeyRing != null)
-	            {
-	            	java.util.Iterator<PGPSecretKey> iterPriv = privateKeyRing.getSecretKeys();
-	            	PGPSecretKey masterKey = iterPriv.next();
-	            	PGPSecretKey secretKey = iterPriv.next();
-	            	System.out.println(masterKey.isSigningKey());
-	            	signAlg=masterKey.getPublicKey().getAlgorithm();
-	            	
-	        	privateKey = masterKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder()
-							.setProvider("BC").build(password1.toCharArray()));
-	            }
-			
-			
-			ms.configSignature(true, signAlg, privateKey);
-			
-			
-			ms.processMessage("srpski.txt", "srpski-encrypted.txt", true);
-			
-			ms.setPassword("Sifra123");
-			ms.processMessage("srpski-encrypted.txt", "srpski-decrypted.txt", false);
-			System.out.println("Finished sending");
-			
-			
-			
-			
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	
+    public boolean isRequiresRadix64() {
+        return requiresRadix64;
+    }
 
-		
-	}
-	
+    public void setRequiresRadix64(boolean requiresRadix64) {
+        this.requiresRadix64 = requiresRadix64;
+    }
 
-	
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
+    }
+
+    public void configSignature(boolean isRequired, long privateKeyID) throws PGPException {
+        if (isRequired) {
+            PGPSecretKey secretKey = PGPAsymmetricKeyUtil.getSCKeyFromSCRing(util.getSCKeyRingFromSCKeyRingCollection(privateKeyID));
+            PGPPrivateKey privateKey = secretKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder()
+                    .setProvider("BC").build(password.toCharArray()));
+            this.configSignature(isRequired, privateKey.getPublicKeyPacket().getAlgorithm(), privateKey);
+
+        } else {
+            this.requiresSignature = false;
+        }
+    }
+
+    public void configSignature(boolean isRequired, int algorithm, PGPPrivateKey signingKey) {
+        this.requiresSignature = isRequired;
+        this.signingKey = signingKey;
+        this.signingAlgorithm = algorithm;
+    }
+
+    public void configEncryption(boolean isRequired, List<Long> publicKeyIDs, int algorithm) {
+        List<PGPPublicKey> publicKeysList = new LinkedList<>();
+        for (long keyId : publicKeyIDs) {
+            publicKeysList.add(PGPAsymmetricKeyUtil.getPUKeyFromPURing(util.getPUKeyRingFromPUKeyRingCollection(keyId)));
+        }
+
+        this.configEncryption(isRequired, algorithm, publicKeysList);
+
+    }
+
+    public void configEncryption(boolean isRequired, int algorithm, List<PGPPublicKey> encryptionKey) {
+
+        this.requiresEncryption = isRequired;
+        this.encryptionKey = encryptionKey;
+        this.encryptionAlgorithm = algorithm;
+    }
+
+    public void configCompression(boolean isRequired, int algorithm) {
+        this.requiresCompression = isRequired;
+        this.compressionAlgorithm = algorithm;
+    }
+
+    public byte[] encrypt() throws PGPException, IOException {
+        if (requiresSignature) {
+            this.data = PGPServicesUtil.sign(this.data, signingKey, signingAlgorithm);
+        }
+        if (requiresCompression) {
+            this.data = PGPServicesUtil.compress(this.data, compressionAlgorithm);
+        }
+        if (requiresEncryption) {
+            this.data = PGPServicesUtil.encrypt(this.data, encryptionKey, encryptionAlgorithm);
+        }
+        if (requiresRadix64) {
+            this.data = PGPServicesUtil.encodeRadix64(this.data);
+        }
+        return this.data;
+    }
+
+    
+    
+    public void decodeDecryptoinPhase(){
+        try {
+
+            data = PGPServicesUtil.decodeRadix64(data);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+        }
+    
+    }
+    
+    public void decryptDecryptionPhase() throws PGPException{
+        try {
+            data = PGPServicesUtil.decrypt(data, password.toCharArray());
+        } catch (IOException|ExtendedPGPException e) {
+            // TODO Auto-generated catch block
+            ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+        }
+    
+    }
+    
+    public void decompressDecryptionPhase(){
+            try {
+            data = PGPServicesUtil.decompress(data);
+        } catch (Exception e) {
+            ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+        }
+
+    }
+    public void verifySignatureDecriptionPhase(){
+    try {
+            PGPServicesUtil.verifySignature(data);
+            this.messageAuthor=PGPServicesUtil.extractMessageAuthor(data);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            ErrorReportUtil.reportError(e);
+         
+        }
+    }
+
+    public void readFileToDecrypt(String inputFile){
+        try {
+            this.data = IOUtil.readFromFile(inputFile);
+        } catch (IOException ex) {
+            Logger.getLogger(PGPMessageSenderDriver.class.getName()).log(Level.SEVERE, null, ex);
+        }
+          
+    }
+    
+    public void writeToFileDecrypted(String outputFile){
+        try {
+            IOUtil.writeToFile(outputFile, data);
+        } catch (IOException ex) {
+            Logger.getLogger(PGPMessageSenderDriver.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+   
+
+    public void encryptMessage(String inputFile, String outputFile) {
+        try {
+            this.inputFile = inputFile;
+            this.outputFile = outputFile;
+            this.data = IOUtil.readFromFile(inputFile);
+            byte[] processedData = encrypt();
+            IOUtil.writeToFile(outputFile, processedData);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+
+        }
+
+    }
+
+    public static void main(String[] args) {
+
+        String name1 = "Nikola Vucenovic";
+        String mail1 = " <nikolavucenovic97@gmail.com>";
+        String password1 = "Sifra123";
+        String name2 = "Milo Tomasevic";
+        String mail2 = "<milo@gmail.com>";
+        String password2 = "Sifra123";
+
+        try {
+            Security.addProvider(new BouncyCastleProvider());
+            util = new PGPAsymmetricKeyUtil();;
+            util.generateNewKeyRing(name1, mail1, password1, "DSA", 1024);
+            util.generateNewKeyRing(name2, mail2, password2, "ELGAMAL", 1024);
+
+            PGPSecretKeyRing singatureRing = util.getSecretKeyRings().get(0);
+            PGPSecretKeyRing encRing = util.getSecretKeyRings().get(1);
+
+            Iterator<PGPPublicKey> iterPublic = encRing.getPublicKeys();
+            iterPublic.next();
+
+            PGPPublicKey publicKey = iterPublic.next();
+
+            int alg = PGPEncryptedData.TRIPLE_DES;
+
+            PGPMessageSenderDriver ms = new PGPMessageSenderDriver();
+
+            ms.setRequiresCompression(true);
+            ms.setRequiresRadix64(true);
+//			ms.configEncryption(true,  alg, publicKey);
+            System.out.println("Public encrypt id:\t" + publicKey.getKeyID());
+
+            PGPSecretKeyRing privateKeyRing = singatureRing;
+            //TODO DOHVATANJE RINGA KLJUCEVA
+            PGPPrivateKey privateKey = null;
+            int signAlg = 1;
+            if (privateKeyRing != null) {
+                java.util.Iterator<PGPSecretKey> iterPriv = privateKeyRing.getSecretKeys();
+                PGPSecretKey masterKey = iterPriv.next();
+                PGPSecretKey secretKey = iterPriv.next();
+                System.out.println("Secret sign id:\t" + secretKey.getKeyID());
+                System.out.println(masterKey.isSigningKey());
+                signAlg = secretKey.getPublicKey().getAlgorithm();
+
+                privateKey = secretKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder()
+                        .setProvider("BC").build(password1.toCharArray()));
+                System.out.println("Private sign id:\t" + privateKey.getKeyID());
+            }
+
+            ms.configSignature(false, signAlg, privateKey);
+
+            String name = "srpski";
+//            ms.processMessage(name + ".txt", name + "-encrypted.txt", true);
+
+            ms.setPassword("Sifra123");
+//            ms.processMessage(name + "-encrypted.txt", name + "-decrypted.txt", false);
+            System.out.println("Finished sending");
+
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
 
 }
