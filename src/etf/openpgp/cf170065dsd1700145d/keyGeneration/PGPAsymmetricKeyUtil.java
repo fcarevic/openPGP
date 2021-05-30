@@ -1,5 +1,6 @@
 package etf.openpgp.cf170065dsd1700145d.keyGeneration;
 
+import java.io.IOException;
 import org.bouncycastle.bcpg.HashAlgorithmTags;
 import org.bouncycastle.openpgp.*;
 import org.bouncycastle.openpgp.operator.PBESecretKeyEncryptor;
@@ -8,8 +9,6 @@ import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPDigestCalculatorProviderBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPKeyPair;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyEncryptorBuilder;
-
-import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -17,27 +16,61 @@ import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 
 public class PGPAsymmetricKeyUtil {
 
-    //My public-private keys collections
-    private PGPSecretKeyRingCollection pgpSecretKeyRingCollection = new PGPSecretKeyRingCollection(new ArrayList<>());
+    private PGPSecretKeyRingCollection pgpSecretKeyRingCollection;
+//My public-private keys collections
     //Receivers public keys collections
-    private PGPPublicKeyRingCollection pgpPublicKeyRingCollection = new PGPPublicKeyRingCollection(new ArrayList<>());
+    private PGPPublicKeyRingCollection pgpPublicKeyRingCollection;
 
-
-    private final Map<String, Integer> algorithms = Map.of(
+    private static final Map<String, Integer> algorithms = Map.of(
             "DSA", PGPPublicKey.DSA,
             "ELGAMAL", PGPPublicKey.ELGAMAL_ENCRYPT
     );
 
+    public static Map<String, Integer> getAlgorithms() {
+        return algorithms;
+    }
 
-    final static String SECURITY_PROVIDER = "BC";
-    final static String MASTER_KEY_ALGORITHM = "DSA";
-    final static int MASTER_KEY_SIZE = 1024;
+    public static String getAlgorithmByID(int algorithmid) {
 
-    public PGPAsymmetricKeyUtil() throws PGPException, IOException {
+        for (Map.Entry<String, Integer> entry : algorithms.entrySet()) {
+            if (entry.getValue() == algorithmid) {
+                return entry.getKey();
+            }
+        }
+        return "not found";
+    }
+
+    private final static String SECURITY_PROVIDER = "BC";
+    private final static String MASTER_KEY_ALGORITHM = "DSA";
+    private final static int MASTER_KEY_SIZE = 1024;
+
+    private final static String PU_KEY_RING_COLLECTION = "public.ring";
+    private final static String SC_KEY_RING_COLLECTION = "secret.ring";
+
+    public PGPAsymmetricKeyUtil() {
+        try {
+
+            this.pgpPublicKeyRingCollection = PGPKeyImporter.importPUKeyRingCollection(PU_KEY_RING_COLLECTION);
+            this.pgpSecretKeyRingCollection = PGPKeyImporter.importSCKeyRingCollection(SC_KEY_RING_COLLECTION);
+
+            if (this.pgpPublicKeyRingCollection == null) {
+                this.pgpPublicKeyRingCollection = new PGPPublicKeyRingCollection(new ArrayList<>());
+            }
+
+            if (this.pgpSecretKeyRingCollection == null) {
+                this.pgpSecretKeyRingCollection = new PGPSecretKeyRingCollection(new ArrayList<>());
+            }
+        } catch (IOException | PGPException ex) {
+
+        }
     }
 
     private KeyPair generateNewKeyPair(String algorithm, int keySize, String provider) throws NoSuchAlgorithmException, NoSuchProviderException {
@@ -47,8 +80,11 @@ public class PGPAsymmetricKeyUtil {
     }
 
     private void addSCKeyRingToSCRingCollection(PGPSecretKeyRing pgpSecretKeyRing) {
-        if (pgpSecretKeyRing == null) return;
-        PGPSecretKeyRingCollection.addSecretKeyRing(pgpSecretKeyRingCollection, pgpSecretKeyRing);
+        pgpSecretKeyRingCollection = PGPSecretKeyRingCollection.addSecretKeyRing(pgpSecretKeyRingCollection, pgpSecretKeyRing);
+    }
+
+    private void addPUKeyRingToPURingCollection(PGPPublicKeyRing pgpPublicKeyRing) {
+        pgpPublicKeyRingCollection = PGPPublicKeyRingCollection.addPublicKeyRing(pgpPublicKeyRingCollection, pgpPublicKeyRing);
     }
 
     public boolean generateNewKeyRing(String userName, String userMail, String userPassword, String algorithm, int keySize) {
@@ -61,7 +97,6 @@ public class PGPAsymmetricKeyUtil {
             PGPKeyPair newPGPKeyPair = new JcaPGPKeyPair(algorithms.get(algorithm), newKeyPair, currentDate);
             PGPKeyPair masterPGPKeyPair = new JcaPGPKeyPair(algorithms.get(MASTER_KEY_ALGORITHM), masterKeyPair, currentDate);
 
-
             PGPDigestCalculator sha1Hash = new JcaPGPDigestCalculatorProviderBuilder().build().get(HashAlgorithmTags.SHA1);
 
             JcaPGPContentSignerBuilder signerBuilder = new JcaPGPContentSignerBuilder(masterPGPKeyPair.getPublicKey().getAlgorithm(), HashAlgorithmTags.SHA1);
@@ -69,7 +104,7 @@ public class PGPAsymmetricKeyUtil {
             JcePBESecretKeyEncryptorBuilder secretKeyEncBuilder = new JcePBESecretKeyEncryptorBuilder(PGPEncryptedData.AES_256, sha1Hash);
             PBESecretKeyEncryptor keyEncryptor = secretKeyEncBuilder.setProvider(SECURITY_PROVIDER).build(userPassword.toCharArray());
 
-            String userInfo = String.format("%s-%s", userName, userMail);
+            String userInfo = String.format("%s <%s>", userName, userMail);
 
             PGPKeyRingGenerator pgpKeyRingGenerator = new PGPKeyRingGenerator(
                     PGPSignature.POSITIVE_CERTIFICATION, masterPGPKeyPair, userInfo, sha1Hash, null, null, signerBuilder, keyEncryptor);
@@ -78,11 +113,15 @@ public class PGPAsymmetricKeyUtil {
 
             PGPSecretKeyRing pgpSecretKeyRing = pgpKeyRingGenerator.generateSecretKeyRing();
             addSCKeyRingToSCRingCollection(pgpSecretKeyRing);
+            try {
+                PGPKeyExporter.exportKeySCRingCollection(pgpSecretKeyRingCollection, SC_KEY_RING_COLLECTION);
+            } catch (IOException ex) {
+                return false;
+            }
 
             return true;
 
         } catch (NoSuchAlgorithmException | NoSuchProviderException | PGPException e) {
-            e.printStackTrace();
             return false;
         }
 
@@ -120,31 +159,43 @@ public class PGPAsymmetricKeyUtil {
         return null;
     }
 
-    public boolean deleteSCKeyRing(long publicID) throws PGPException {
-        PGPSecretKeyRing pgpSecretKeyRing = getSCKeyRingFromSCKeyRingCollection(publicID);
-        if (pgpSecretKeyRing == null) return false;
-        pgpSecretKeyRingCollection = PGPSecretKeyRingCollection.removeSecretKeyRing(pgpSecretKeyRingCollection, pgpSecretKeyRing);
-        return true;
+    public boolean deleteSCKeyRing(long publicID, String password) {
+        try {
+            PGPSecretKeyRing pgpSecretKeyRing = getSCKeyRingFromSCKeyRingCollection(publicID);
+            if (pgpSecretKeyRing == null) {
+                return false;
+            }
+            PGPSecretKey pGPSecretKey = getSCKeyFromSCRing(pgpSecretKeyRing);
+            pgpSecretKeyRing.getSecretKey().extractPrivateKey(new JcePBESecretKeyDecryptorBuilder()
+                    .setProvider(SECURITY_PROVIDER).build(password.toCharArray()));
+            pgpSecretKeyRingCollection = PGPSecretKeyRingCollection.removeSecretKeyRing(pgpSecretKeyRingCollection, pgpSecretKeyRing);
+            return true;
+        } catch (PGPException ex) {
+            return false;
+        }
     }
 
-    public boolean deletePUKeyRing(long publicID) throws PGPException {
+    public boolean deletePUKeyRing(long publicID) {
         PGPPublicKeyRing pgpPublicKeyRing = getPUKeyRingFromPUKeyRingCollection(publicID);
-        if (pgpPublicKeyRing == null) return false;
+        if (pgpPublicKeyRing == null) {
+            return false;
+        }
         pgpPublicKeyRingCollection = PGPPublicKeyRingCollection.removePublicKeyRing(pgpPublicKeyRingCollection, pgpPublicKeyRing);
         return true;
     }
 
-
-    public PGPPublicKey getPUKeyFromPURing(PGPPublicKeyRing pgpPublicKeyRing) {
+    public static PGPPublicKey getPUKeyFromPURing(PGPPublicKeyRing pgpPublicKeyRing) {
         Iterator<PGPPublicKey> pgpPublicKeyIterator = pgpPublicKeyRing.iterator();
-        pgpPublicKeyIterator.next();
-        return pgpPublicKeyIterator.next();
+        PGPPublicKey masterKey = pgpPublicKeyIterator.next();
+        PGPPublicKey myKey = pgpPublicKeyIterator.next();
+        return myKey;
     }
 
-    public PGPSecretKey getSCKeyFromSCRing(PGPSecretKeyRing pgpSecretKeyRing) {
+    public static PGPSecretKey getSCKeyFromSCRing(PGPSecretKeyRing pgpSecretKeyRing) {
         Iterator<PGPSecretKey> pgpSecretKeyIterator = pgpSecretKeyRing.iterator();
-        PGPSecretKey pgpSecretKey = pgpSecretKeyIterator.next();
-        return pgpSecretKeyIterator.next();
+        PGPSecretKey masterKey = pgpSecretKeyIterator.next();
+        PGPSecretKey myKey = pgpSecretKeyIterator.next();
+        return myKey;
     }
 
     public ArrayList<PGPPublicKeyRing> getPublicKeyRings() {
@@ -163,6 +214,85 @@ public class PGPAsymmetricKeyUtil {
             pgpSecretKeys.add(keyRingIterator.next());
         }
         return pgpSecretKeys;
+    }
+
+    public boolean importKeyToPUKeyRingCollection(String path) {
+        try {
+            PGPPublicKeyRing pgpPublicKeyRing = PGPKeyImporter.importPUKeyRIng(path);
+            addPUKeyRingToPURingCollection(pgpPublicKeyRing);
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    public boolean importKeyToSCKeyRingCollection(String path) {
+        try {
+            PGPSecretKeyRing pgpSecretKeyRing = PGPKeyImporter.importSCKeyRing(path);
+            addSCKeyRingToSCRingCollection(pgpSecretKeyRing);
+            return true;
+        } catch (IOException | PGPException ex) {
+            return false;
+        }
+    }
+
+    public boolean exportKeyFromSCKeyRingCollection(long keyID, String path) {
+        try {
+            PGPSecretKeyRing pgpSecretKeyRing = getSCKeyRingFromSCKeyRingCollection(keyID);
+            if (pgpSecretKeyRing == null) {
+                return false;
+            }
+            PGPKeyExporter.exportSCKey(pgpSecretKeyRing, path);
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    public boolean exportKeyFromPURingCollection(long keyID, String path) {
+        try {
+            PGPPublicKeyRing pgpPublicKeyRing = getPUKeyRingFromPUKeyRingCollection(keyID);
+            if (pgpPublicKeyRing == null) {
+                return false;
+            }
+            PGPKeyExporter.exportPUKey(pgpPublicKeyRing, path);
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    public boolean exporPUtKeyFromSCKeyRingCollection(long keyID, String path) {
+        try {
+            PGPSecretKeyRing pgpSecretKeyRing = getSCKeyRingFromSCKeyRingCollection(keyID);
+            if (pgpSecretKeyRing == null) {
+                return false;
+            }
+            List<PGPPublicKey> publicKeys = new ArrayList<PGPPublicKey>();
+            pgpSecretKeyRing.getPublicKeys().forEachRemaining(publicKeys::add);
+
+            PGPPublicKeyRing pgpPublicKeyRing = new PGPPublicKeyRing(publicKeys);
+            PGPKeyExporter.exportPUKey(pgpPublicKeyRing, path);
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
+
+    public void savePUKeyRingCollection() {
+        try {
+            PGPKeyExporter.exportKeyPURingCollection(pgpPublicKeyRingCollection, PU_KEY_RING_COLLECTION);
+        } catch (IOException ex) {
+            Logger.getLogger(PGPAsymmetricKeyUtil.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void saveSCKeyRingCollection() {
+        try {
+            PGPKeyExporter.exportKeySCRingCollection(pgpSecretKeyRingCollection, SC_KEY_RING_COLLECTION);
+        } catch (IOException ex) {
+            Logger.getLogger(PGPAsymmetricKeyUtil.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }

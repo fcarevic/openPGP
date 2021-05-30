@@ -1,7 +1,22 @@
 package etf.openpgp.cf170065dsd1700145d.GUI;
 
+import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPAsymmetricKeyUtil;
+import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPKeyExporter;
+import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPKeyInfo;
+import java.awt.font.NumericShaper;
+import java.security.Security;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openpgp.PGPPublicKeyRing;
+import org.bouncycastle.openpgp.PGPSecretKey;
+import org.bouncycastle.openpgp.PGPSecretKeyRing;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -43,12 +58,12 @@ public class MainWindow extends javax.swing.JFrame {
         passwordRequestDialog = new javax.swing.JDialog(this);
         jPanel4 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        jPasswordField1 = new javax.swing.JPasswordField();
+        passwordField = new javax.swing.JPasswordField();
         jButton5 = new javax.swing.JButton();
         chooseMessageSourceFC = new javax.swing.JFileChooser();
         chooseMessageDestinationFC = new javax.swing.JFileChooser();
         jComboBox2 = new javax.swing.JComboBox<>();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        showKeyRingCollectionPane = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         userNameTF = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
@@ -64,15 +79,16 @@ public class MainWindow extends javax.swing.JFrame {
         generateNewKeyPaitButton = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        keyRing = new javax.swing.JTable(){
+        keyRingTable = new javax.swing.JTable(){
             public boolean editCellAt(int row, int column, java.util.EventObject e) {
                 return false;
             }
         };
-        jRadioButton1 = new javax.swing.JRadioButton();
-        jRadioButton2 = new javax.swing.JRadioButton();
-        jButton1 = new javax.swing.JButton();
+        showSecretKeysRingRB = new javax.swing.JRadioButton();
+        showPublicKeysRingRB = new javax.swing.JRadioButton();
+        exportPU = new javax.swing.JButton();
         deleteKey = new javax.swing.JButton();
+        exportPK = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
         chooseMessageSourceButton = new javax.swing.JButton();
@@ -83,13 +99,14 @@ public class MainWindow extends javax.swing.JFrame {
         encrytpionMessageOptionPanel = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
+        publicKeyList = new javax.swing.JList<>();
         jLabel4 = new javax.swing.JLabel();
         jRadioButton3 = new javax.swing.JRadioButton();
         jRadioButton4 = new javax.swing.JRadioButton();
         signMessageOptionPanel = new javax.swing.JPanel();
-        jComboBox1 = new javax.swing.JComboBox<>();
         jLabel9 = new javax.swing.JLabel();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        secretKeyList = new javax.swing.JList<>();
         jCheckBox1 = new javax.swing.JCheckBox();
         jCheckBox2 = new javax.swing.JCheckBox();
         jButton8 = new javax.swing.JButton();
@@ -110,10 +127,20 @@ public class MainWindow extends javax.swing.JFrame {
 
         jLabel3.setText("Type password for your private key");
 
-        jPasswordField1.setText("jPasswordField1");
+        passwordField.setText("jPasswordField1");
+        passwordField.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                passwordFieldActionPerformed(evt);
+            }
+        });
 
         jButton5.setText("Submit");
         jButton5.setFocusPainted(false);
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -123,7 +150,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addGap(108, 108, 108)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPasswordField1)
+                    .addComponent(passwordField)
                     .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(107, 107, 107))
         );
@@ -133,10 +160,10 @@ public class MainWindow extends javax.swing.JFrame {
                 .addGap(81, 81, 81)
                 .addComponent(jLabel3)
                 .addGap(18, 18, 18)
-                .addComponent(jPasswordField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(passwordField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(29, 29, 29)
                 .addComponent(jButton5)
-                .addContainerGap(116, Short.MAX_VALUE))
+                .addContainerGap(108, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout passwordRequestDialogLayout = new javax.swing.GroupLayout(passwordRequestDialog.getContentPane());
@@ -155,6 +182,12 @@ public class MainWindow extends javax.swing.JFrame {
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        showKeyRingCollectionPane.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                showKeyRingCollectionPaneMouseClicked(evt);
+            }
+        });
 
         userNameTF.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -194,13 +227,21 @@ public class MainWindow extends javax.swing.JFrame {
 
         keySize.add(jRadioButton6);
         jRadioButton6.setText("1024");
+        jRadioButton6.setActionCommand("1024");
+        jRadioButton6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jRadioButton6ActionPerformed(evt);
+            }
+        });
 
         keySize.add(jRadioButton7);
+        jRadioButton7.setActionCommand("2048");
         jRadioButton7.setText("2048");
 
         keySize.add(keySize4096RB);
         keySize.setSelected(keySize4096RB.getModel(), true);
         keySize4096RB.setText("4096");
+        keySize4096RB.setActionCommand("4096");
 
         generateNewKeyPaitButton.setText("Submit");
         generateNewKeyPaitButton.addActionListener(new java.awt.event.ActionListener() {
@@ -269,9 +310,9 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap(73, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Generate new key pair", jPanel1);
+        showKeyRingCollectionPane.addTab("Generate new key pair", jPanel1);
 
-        keyRing.setModel(new javax.swing.table.DefaultTableModel(
+        keyRingTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null},
                 {null, null, null, null, null},
@@ -300,21 +341,35 @@ public class MainWindow extends javax.swing.JFrame {
                 {null, null, null, null, null}
 
             },
-            new String [] {
-                "Name", "Email", "PU key ID", "Algorithm", "Timestamp",
-            }
+            columNameString
         ));
-        keyRing.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
-        keyRing.setRequestFocusEnabled(false);
-        jScrollPane1.setViewportView(keyRing);
+        keyRingTable.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        keyRingTable.setRequestFocusEnabled(false);
+        jScrollPane1.setViewportView(keyRingTable);
 
-        showKeyRing.add(jRadioButton1);
-        jRadioButton1.setText("Secret key ring");
+        showKeyRing.add(showSecretKeysRingRB);
+        showSecretKeysRingRB.setText("Secret key ring");
+        showSecretKeysRingRB.setActionCommand("");
+        showSecretKeysRingRB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showSecretKeysRingRBActionPerformed(evt);
+            }
+        });
 
-        showKeyRing.add(jRadioButton2);
-        jRadioButton2.setText("Public key ring");
+        showKeyRing.add(showPublicKeysRingRB);
+        showPublicKeysRingRB.setText("Public key ring");
+        showPublicKeysRingRB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                showPublicKeysRingRBActionPerformed(evt);
+            }
+        });
 
-        jButton1.setText("Export ");
+        exportPU.setText("Export PU");
+        exportPU.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportPUActionPerformed(evt);
+            }
+        });
 
         deleteKey.setText("Delete");
         deleteKey.addActionListener(new java.awt.event.ActionListener() {
@@ -323,21 +378,31 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
 
+        exportPK.setText("Export PK");
+        exportPK.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportPKActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 649, Short.MAX_VALUE)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(10, 10, 10)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jRadioButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jRadioButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(showPublicKeysRingRB, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(showSecretKeysRingRB, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(deleteKey, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(29, 29, 29))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                        .addComponent(deleteKey, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(exportPU, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(exportPK, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -346,16 +411,17 @@ public class MainWindow extends javax.swing.JFrame {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 357, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jRadioButton1)
-                    .addComponent(jButton1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jRadioButton2)
+                    .addComponent(showSecretKeysRingRB)
+                    .addComponent(exportPU)
                     .addComponent(deleteKey))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(showPublicKeysRingRB)
+                    .addComponent(exportPK))
+                .addContainerGap(40, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Show key rings", jPanel2);
+        showKeyRingCollectionPane.addTab("Show key rings", jPanel2);
 
         chooseMessageSourceButton.setText("Choose message source");
         chooseMessageSourceButton.addActionListener(new java.awt.event.ActionListener() {
@@ -391,12 +457,12 @@ public class MainWindow extends javax.swing.JFrame {
 
         jLabel8.setText("Encryption algoritm:");
 
-        jList1.setModel(new javax.swing.AbstractListModel<String>() {
+        publicKeyList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
             public String getElementAt(int i) { return strings[i]; }
         });
-        jScrollPane2.setViewportView(jList1);
+        jScrollPane2.setViewportView(publicKeyList);
 
         jLabel4.setText("Choose keys from public ring for encryption");
 
@@ -439,29 +505,36 @@ public class MainWindow extends javax.swing.JFrame {
                 .addGap(14, 14, 14))
         );
 
-        jComboBox1.setMaximumRowCount(2);
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
         jLabel9.setText("Choose private key for sign");
+
+        secretKeyList.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        secretKeyList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane3.setViewportView(secretKeyList);
 
         javax.swing.GroupLayout signMessageOptionPanelLayout = new javax.swing.GroupLayout(signMessageOptionPanel);
         signMessageOptionPanel.setLayout(signMessageOptionPanelLayout);
         signMessageOptionPanelLayout.setHorizontalGroup(
             signMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jComboBox1, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(signMessageOptionPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGap(81, 81, 81)
+                .addGroup(signMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(signMessageOptionPanelLayout.createSequentialGroup()
+                        .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addComponent(jScrollPane3)))
         );
         signMessageOptionPanelLayout.setVerticalGroup(
             signMessageOptionPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(signMessageOptionPanelLayout.createSequentialGroup()
                 .addGap(15, 15, 15)
                 .addComponent(jLabel9)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(20, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(40, Short.MAX_VALUE))
         );
 
         jCheckBox1.setText("Compresion(with ZIP)");
@@ -527,7 +600,7 @@ public class MainWindow extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jCheckBox1))
                     .addComponent(signMessageOptionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 61, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButton8)
                 .addGap(60, 60, 60))
         );
@@ -543,11 +616,16 @@ public class MainWindow extends javax.swing.JFrame {
             .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab("Send message", jPanel5);
+        showKeyRingCollectionPane.addTab("Send message", jPanel5);
 
         jButton6.setText("Choose message source");
 
         jButton7.setText("Choose message destination");
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
 
         jButton9.setText("Receive message");
 
@@ -577,7 +655,7 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap(122, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Receive Message", jPanel6);
+        showKeyRingCollectionPane.addTab("Receive Message", jPanel6);
 
         jButton3.setText("Import key to secret key ring");
         jButton3.addActionListener(new java.awt.event.ActionListener() {
@@ -617,17 +695,17 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap(42, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Import key", jPanel3);
+        showKeyRingCollectionPane.addTab("Import key", jPanel3);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1)
+            .addComponent(showKeyRingCollectionPane)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 517, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(showKeyRingCollectionPane, javax.swing.GroupLayout.PREFERRED_SIZE, 517, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -641,11 +719,34 @@ public class MainWindow extends javax.swing.JFrame {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here:
-        fileChooser.showOpenDialog(null);
+        String path = getSelectedFile();
+        if (path.length() == 0) {
+            return;
+        }
+        boolean successful = pGPAsymmetricKeyUtil.importKeyToSCKeyRingCollection(path);
+        if (!successful) {
+            GUIUtil.showErrorMessage("Some error with file, try againl");
+        } else {
+            GUIUtil.showInfoMessage("Key successfully imported");
+            pGPAsymmetricKeyUtil.saveSCKeyRingCollection();
+        }
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        fileChooser.showOpenDialog(null);
+
+        String path = getSelectedFile();
+        if (path.length() == 0) {
+            return;
+        }
+
+        boolean successful = pGPAsymmetricKeyUtil.importKeyToPUKeyRingCollection(path);
+        if (!successful) {
+            GUIUtil.showErrorMessage("Some error with file, try againl");
+        } else {
+            GUIUtil.showInfoMessage("Key successfully imported");
+            pGPAsymmetricKeyUtil.savePUKeyRingCollection();
+        }
+
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void dsaRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dsaRBActionPerformed
@@ -658,25 +759,89 @@ public class MainWindow extends javax.swing.JFrame {
         keySize4096RB.setVisible(true);
     }//GEN-LAST:event_elGamalRBActionPerformed
 
+    private void deleteKeyFromSpecficRing(long keyID) {
+        boolean success = true;
+        if (showSecretKeysRingRB.getSelectedObjects() != null) {
+            String password = getUserPassword();
+            success = pGPAsymmetricKeyUtil.deleteSCKeyRing(keyID, password);
+        } else if (showPublicKeysRingRB.getSelectedObjects() != null) {
+            success = pGPAsymmetricKeyUtil.deletePUKeyRing(keyID);
+        }
+        if (!success) {
+            GUIUtil.showErrorMessage("Wrong password");
+        } else {
+            GUIUtil.showInfoMessage("Key successfuly deleted");
+        }
+
+    }
+
+    private long getIDOfSelectedKey() {
+        int selectedRow = keyRingTable.getSelectedRow();
+        if (selectedRow == -1) {
+            GUIUtil.showErrorMessage("Key not selected");
+            return -1;
+        }
+        long keyId = Long.parseLong((String) keyRingTable.getModel().getValueAt(selectedRow, ColumName.KEYID.ordinal()));
+        return keyId;
+    }
+
     private void deleteKeyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteKeyActionPerformed
         // TODO add your handling code here:
 
-        passwordRequestDialog.setVisible(true);
-
+        long keyID = getIDOfSelectedKey();
+        if (keyID == -1) {
+            return;
+        }
+        deleteKeyFromSpecficRing(keyID);
     }//GEN-LAST:event_deleteKeyActionPerformed
 
+    private String getUserPassword() {
+        passwordRequestDialog.setVisible(true);
 
+        System.out.println("etf.openpgp.cf170065dsd1700145d.GUI.MainWindow.generateNewKeyPaitButtonActionPerformed()");
+
+        String userPassword = new String(passwordField.getPassword());
+
+        if (userPassword.length() == 0) {
+            GUIUtil.showErrorMessage(" Password cant be empty");
+            return null;
+        }
+
+        System.out.println(userPassword);
+        passwordField.setText("");
+        return userPassword;
+    }
+
+    private String getSelectedFile() {
+        int result = fileChooser.showOpenDialog(null);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            GUIUtil.showErrorMessage("File not selectedl");
+            return "";
+        }
+        String path = fileChooser.getSelectedFile().getAbsolutePath();
+        System.out.println(path);
+        return path;
+    }
     private void generateNewKeyPaitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateNewKeyPaitButtonActionPerformed
         // TODO add your handling code here:
         String userName = userNameTF.getText(), userEmail = userEmailTF.getText();
 
         if (userName.length() == 0 || GUIUtil.checkEmail(userEmail) == false) {
-            GUIUtil.showErrorMessage( "Name or Email not ok");
+            GUIUtil.showErrorMessage("Name or Email not ok");
+            return;
         }
 
         String keyAlgorithm = keyType.getSelection().getActionCommand();
-        String keySize = this.keySize.getSelection().getActionCommand();
+        int sizeOfKey = Integer.parseInt(this.keySize.getSelection().getActionCommand());
 
+        String userPassword = getUserPassword();
+
+        boolean succesful = pGPAsymmetricKeyUtil.generateNewKeyRing(userName, userEmail, userPassword, keyAlgorithm, sizeOfKey);
+        if (!succesful) {
+            GUIUtil.showErrorMessage("Error while generating and saving new key");
+        } else {
+            GUIUtil.showInfoMessage("New key succesfully generated");
+        }
 
     }//GEN-LAST:event_generateNewKeyPaitButtonActionPerformed
 
@@ -703,6 +868,177 @@ public class MainWindow extends javax.swing.JFrame {
         chooseMessageDestinationFC.showOpenDialog(null);
     }//GEN-LAST:event_chooseMessageDestinationButtonActionPerformed
 
+    private void passwordFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_passwordFieldActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_passwordFieldActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        passwordRequestDialog.setVisible(false);
+        passwordRequestDialog.dispose();
+    }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jRadioButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jRadioButton6ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jRadioButton6ActionPerformed
+
+    private enum ColumName {
+        NAME, EMAIL, KEYID, Algorithm, TimeStamp
+    }
+
+    private void showSecretKeyRingCollection() {
+        ArrayList<PGPSecretKeyRing> secretKeyRings = pGPAsymmetricKeyUtil.getSecretKeyRings();
+
+        TableModel tableModel = new DefaultTableModel(columNameString, secretKeyRings.size());
+
+        for (int row = 0; row < secretKeyRings.size(); row++) {
+
+            PGPSecretKeyRing pgpSecretKeyRing = secretKeyRings.get(row);
+            PGPKeyInfo pgpKeyInfo = new PGPKeyInfo(pgpSecretKeyRing);
+
+            tableModel.setValueAt(pgpKeyInfo.getName(), row, ColumName.NAME.ordinal());
+            tableModel.setValueAt(pgpKeyInfo.getEmail(), row, ColumName.EMAIL.ordinal());
+            tableModel.setValueAt(pgpKeyInfo.getPublicKeyId(), row, ColumName.KEYID.ordinal());
+            tableModel.setValueAt(pgpKeyInfo.getAlgorithm(), row, ColumName.Algorithm.ordinal());
+            tableModel.setValueAt(pgpKeyInfo.getTimeStamp(), row, ColumName.TimeStamp.ordinal());
+
+        }
+
+        keyRingTable.setModel(tableModel);
+    }
+
+    private void showPublicKeyRingCollection() {
+        ArrayList<PGPPublicKeyRing> secretKeyRings = pGPAsymmetricKeyUtil.getPublicKeyRings();
+
+        TableModel tableModel = new DefaultTableModel(columNameString, secretKeyRings.size());
+
+        for (int row = 0; row < secretKeyRings.size(); row++) {
+
+            PGPPublicKeyRing pgpPublicKeyRing = secretKeyRings.get(row);
+            PGPKeyInfo pgpKeyInfo = new PGPKeyInfo(pgpPublicKeyRing);
+
+            tableModel.setValueAt(pgpKeyInfo.getName(), row, ColumName.NAME.ordinal());
+            tableModel.setValueAt(pgpKeyInfo.getEmail(), row, ColumName.EMAIL.ordinal());
+            tableModel.setValueAt(pgpKeyInfo.getPublicKeyId(), row, ColumName.KEYID.ordinal());
+            tableModel.setValueAt(pgpKeyInfo.getAlgorithm(), row, ColumName.Algorithm.ordinal());
+            tableModel.setValueAt(pgpKeyInfo.getTimeStamp(), row, ColumName.TimeStamp.ordinal());
+
+        }
+
+        keyRingTable.setModel(tableModel);
+    }
+
+    private final String columNameString[] = new String[]{"Name", "Email", "PU key ID", "Algorithm", "Timestamp"};
+
+    private void showSpecificKeyRingCollection() {
+
+        if (showPublicKeysRingRB.getSelectedObjects() != null) {
+            showPublicKeyRingCollection();
+        }
+
+        if (showSecretKeysRingRB.getSelectedObjects() != null) {
+            showSecretKeyRingCollection();
+        }
+
+    }
+
+    private void showSecretKeysRingRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showSecretKeysRingRBActionPerformed
+
+        exportPK.setVisible(true);
+        showSecretKeyRingCollection();
+    }//GEN-LAST:event_showSecretKeysRingRBActionPerformed
+
+    private void showPublicKeysRingRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showPublicKeysRingRBActionPerformed
+        exportPK.setVisible(false);
+        showPublicKeyRingCollection();
+    }//GEN-LAST:event_showPublicKeysRingRBActionPerformed
+
+    private void showSecretKeysID() {
+        List<PGPSecretKeyRing> secretKeyRings = pGPAsymmetricKeyUtil.getSecretKeyRings();
+
+        Vector<String> keysID = new Vector<>();
+        for (int row = 0; row < secretKeyRings.size(); row++) {
+
+            PGPSecretKeyRing pgpSecretKeyRing = secretKeyRings.get(row);
+            PGPKeyInfo pgpKeyInfo = new PGPKeyInfo(pgpSecretKeyRing);
+            keysID.add(pgpKeyInfo.getPublicKeyId());
+        }
+        secretKeyList.setListData(keysID);
+    }
+
+    private void showPublicKeysID() {
+        List<PGPPublicKeyRing> publicKeyRings = pGPAsymmetricKeyUtil.getPublicKeyRings();
+
+        Vector<String> keysID = new Vector<>();
+        for (int row = 0; row < publicKeyRings.size(); row++) {
+
+            PGPPublicKeyRing pgpPublicKeyRing = publicKeyRings.get(row);
+            PGPKeyInfo pgpKeyInfo = new PGPKeyInfo(pgpPublicKeyRing);
+            keysID.add(pgpKeyInfo.getPublicKeyId());
+        }
+        publicKeyList.setListData(keysID);
+    }
+
+    private void showKeyRingCollectionPaneMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_showKeyRingCollectionPaneMouseClicked
+        showSpecificKeyRingCollection();
+        showPublicKeysID();
+        showSecretKeysID();
+
+
+    }//GEN-LAST:event_showKeyRingCollectionPaneMouseClicked
+
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton7ActionPerformed
+
+    private void exportKeyFromSpecificKeyRingCollection(long keyID, String path) {
+        boolean success = true;
+        if (showSecretKeysRingRB.getSelectedObjects() != null) {
+
+            success = pGPAsymmetricKeyUtil.exporPUtKeyFromSCKeyRingCollection(keyID, path);
+        } else if (showPublicKeysRingRB.getSelectedObjects() != null) {
+            success = pGPAsymmetricKeyUtil.exportKeyFromPURingCollection(keyID, path);
+        }
+        if (!success) {
+            GUIUtil.showErrorMessage("Error while exporting");
+        } else {
+            GUIUtil.showInfoMessage("Key successfuly exported");
+        }
+
+    }
+
+    private void exportPUActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportPUActionPerformed
+
+        long keyID = getIDOfSelectedKey();
+        if (keyID == -1) {
+            return;
+        }
+
+        String path = getSelectedFile();
+        if (path.length() == 0) {
+            return;
+        }
+
+        exportKeyFromSpecificKeyRingCollection(keyID, path);
+    }//GEN-LAST:event_exportPUActionPerformed
+
+    private void exportPKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportPKActionPerformed
+        long keyID = getIDOfSelectedKey();
+        if (keyID == -1) {
+            return;
+        }
+
+        String path = getSelectedFile();
+        if (path.length() == 0) {
+            return;
+        }
+        boolean success = pGPAsymmetricKeyUtil.exportKeyFromSCKeyRingCollection(keyID, path);
+        if (!success) {
+            GUIUtil.showErrorMessage("Error while exporting key");
+        } else {
+            GUIUtil.showInfoMessage("Key successfully exported");
+        }
+    }//GEN-LAST:event_exportPKActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -720,15 +1056,21 @@ public class MainWindow extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(MainWindow.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(MainWindow.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(MainWindow.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(MainWindow.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(MainWindow.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+
+        Security.addProvider(new BouncyCastleProvider());
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
@@ -737,6 +1079,9 @@ public class MainWindow extends javax.swing.JFrame {
             }
         });
     }
+//PGP
+    PGPAsymmetricKeyUtil pGPAsymmetricKeyUtil = new PGPAsymmetricKeyUtil();
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel ImportKeyMessage;
@@ -749,9 +1094,10 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JRadioButton elGamalRB;
     private javax.swing.JCheckBox encryptCB;
     private javax.swing.JPanel encrytpionMessageOptionPanel;
+    private javax.swing.JButton exportPK;
+    private javax.swing.JButton exportPU;
     private javax.swing.JFileChooser fileChooser;
     private javax.swing.JButton generateNewKeyPaitButton;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
@@ -761,7 +1107,6 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JButton jButton9;
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JCheckBox jCheckBox2;
-    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -772,7 +1117,6 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -780,22 +1124,25 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
-    private javax.swing.JPasswordField jPasswordField1;
-    private javax.swing.JRadioButton jRadioButton1;
-    private javax.swing.JRadioButton jRadioButton2;
     private javax.swing.JRadioButton jRadioButton3;
     private javax.swing.JRadioButton jRadioButton4;
     private javax.swing.JRadioButton jRadioButton6;
     private javax.swing.JRadioButton jRadioButton7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable keyRing;
+    private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JTable keyRingTable;
     private javax.swing.ButtonGroup keySize;
     private javax.swing.JRadioButton keySize4096RB;
     private javax.swing.ButtonGroup keyType;
+    private javax.swing.JPasswordField passwordField;
     private javax.swing.JDialog passwordRequestDialog;
+    private javax.swing.JList<String> publicKeyList;
+    private javax.swing.JList<String> secretKeyList;
     private javax.swing.ButtonGroup showKeyRing;
+    private javax.swing.JTabbedPane showKeyRingCollectionPane;
+    private javax.swing.JRadioButton showPublicKeysRingRB;
+    private javax.swing.JRadioButton showSecretKeysRingRB;
     private javax.swing.JCheckBox signCB;
     private javax.swing.JPanel signMessageOptionPanel;
     private javax.swing.JTextField userEmailTF;
