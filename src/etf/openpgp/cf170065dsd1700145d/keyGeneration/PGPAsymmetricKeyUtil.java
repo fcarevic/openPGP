@@ -18,6 +18,11 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
@@ -88,6 +93,39 @@ public class PGPAsymmetricKeyUtil {
     }
 
     public boolean generateNewKeyRing(String userName, String userMail, String userPassword, String algorithm, int keySize) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        GenerateKeyRingTask generateNewKeyRingTask = new GenerateKeyRingTask(userName, userMail, userPassword, algorithm, keySize);
+        Future<Boolean> result = executor.submit(generateNewKeyRingTask);
+        try {
+            return result.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            return false;
+        }
+    }
+
+    class GenerateKeyRingTask implements Callable<Boolean> {
+
+        String userName;
+        String userMail;
+        String userPassword;
+        String algorithm;
+        int keySize;
+
+        public GenerateKeyRingTask(String userName, String userMail, String userPassword, String algorithm, int keySize) {
+            this.userName = userName;
+            this.userMail = userMail;
+            this.userPassword = userPassword;
+            this.algorithm = algorithm;
+            this.keySize = keySize;
+        }
+
+        @Override
+        public Boolean call() throws Exception {
+            return PGPAsymmetricKeyUtil.this.generateNewKeyRing(userName, userMail, userPassword, algorithm, keySize);
+        }
+    }
+
+    public boolean generateNewKeyRinTask(String userName, String userMail, String userPassword, String algorithm, int keySize) {
         try {
             KeyPair newKeyPair = generateNewKeyPair(algorithm, keySize, SECURITY_PROVIDER);
             KeyPair masterKeyPair = generateNewKeyPair(MASTER_KEY_ALGORITHM, MASTER_KEY_SIZE, SECURITY_PROVIDER);
