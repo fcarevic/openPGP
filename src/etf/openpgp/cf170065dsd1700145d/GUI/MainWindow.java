@@ -1098,15 +1098,19 @@ public class MainWindow extends javax.swing.JFrame {
             }
             PGPMessageSenderDriver.util = pGPAsymmetricKeyUtil;
 
-            long privateKeyID = Long.parseLong(secretKeyList.getSelectedValue());
-            System.out.println("Private key ID: " + privateKeyID);
+            long privateKeyID = -1;
+            if (secretKeyList.getSelectedValue() != null) {
+                privateKeyID = Long.parseLong(secretKeyList.getSelectedValue());
+                System.out.println("Private key ID: " + privateKeyID);
+            }
 
             List<Long> publicKeyIDs = new LinkedList<>();
             publicKeyList.getSelectedValuesList().forEach(s -> {
                 publicKeyIDs.add(Long.parseLong(s));
                 System.out.println("Public Key ID: " + Long.parseLong(s));
             });
-            if (publicKeyIDs.isEmpty()) {
+
+            if (requiresEncryption && publicKeyIDs.isEmpty()) {
                 GUIUtil.showErrorMessage("Public keys not selected");
                 return;
             }
@@ -1122,14 +1126,14 @@ public class MainWindow extends javax.swing.JFrame {
             msgDriver.setRequiresRadix64(requiresRadix);
             msgDriver.setPassword(password);
             msgDriver.configEncryption(requiresEncryption, publicKeyIDs, encryptionAlgorithm);
-            try{
-            msgDriver.configSignature(requiresSignature, privateKeyID);
-            } catch (PGPException e){
+            try {
+                msgDriver.configSignature(requiresSignature, privateKeyID);
+            } catch (PGPException e) {
                 GUIUtil.showErrorMessage("Wrong key password");
                 return;
             }
             msgDriver.encryptMessage(inputFile, outputFile);
-            
+
             GUIUtil.showInfoMessage("Message created");
         } catch (Exception e) {
             GUIUtil.showErrorMessage("Error while parsing input data and parameters");
@@ -1151,20 +1155,22 @@ public class MainWindow extends javax.swing.JFrame {
         msgDriver.setInputFile(inputFile);
         msgDriver.setOutputFile(outputFile);
         msgDriver.readFileToDecrypt(inputFile);
-        
+
         msgDriver.decodeDecryptoinPhase();
-        
+
         boolean incorrectPassword = false;
         msgDriver.setPassword("");
         do {
-                incorrectPassword = false;
+            incorrectPassword = false;
             try {
                 msgDriver.decryptDecryptionPhase();
             } catch (PGPException ex) {
-                incorrectPassword=true;
-               String password= getUserPassword();
-               if(password==null) return;
-               msgDriver.setPassword(password);
+                incorrectPassword = true;
+                String password = getUserPassword();
+                if (password == null) {
+                    return;
+                }
+                msgDriver.setPassword(password);
             }
         } while (incorrectPassword);
 
@@ -1176,6 +1182,7 @@ public class MainWindow extends javax.swing.JFrame {
         } else {
             GUIUtil.showInfoMessage("Received signed message from " + messageAuthor);
         }
+        msgDriver.literalDataDecryptionPhase();
         msgDriver.writeToFileDecrypted(outputFile);
 
     }//GEN-LAST:event_jButton9ActionPerformed

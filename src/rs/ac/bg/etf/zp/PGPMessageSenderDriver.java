@@ -149,7 +149,8 @@ public class PGPMessageSenderDriver {
     public byte[] encrypt() throws PGPException, IOException {
         if (requiresSignature) {
             this.data = PGPServicesUtil.sign(this.data, signingKey, signingAlgorithm);
-        }
+        } else 
+            this.data=PGPServicesUtil.generateLiteralData(data);
         if (requiresCompression) {
             this.data = PGPServicesUtil.compress(this.data, compressionAlgorithm);
         }
@@ -189,6 +190,15 @@ public class PGPMessageSenderDriver {
             try {
             data = PGPServicesUtil.decompress(data);
         } catch (Exception e) {
+            ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
+        }
+
+    }
+    
+    public void literalDataDecryptionPhase(){
+            try {
+            data = PGPServicesUtil.parseLiteralData(data);
+        } catch (IOException e) {
             ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
         }
 

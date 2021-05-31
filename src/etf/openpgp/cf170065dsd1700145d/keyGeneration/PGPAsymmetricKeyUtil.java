@@ -79,6 +79,7 @@ public class PGPAsymmetricKeyUtil {
     }
 
     private KeyPair generateNewKeyPair(String algorithm, int keySize, String provider) throws NoSuchAlgorithmException, NoSuchProviderException {
+
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(algorithm, provider);
         keyPairGenerator.initialize(keySize);
         return keyPairGenerator.generateKeyPair();
@@ -121,11 +122,11 @@ public class PGPAsymmetricKeyUtil {
 
         @Override
         public Boolean call() throws Exception {
-            return PGPAsymmetricKeyUtil.this.generateNewKeyRing(userName, userMail, userPassword, algorithm, keySize);
+            return PGPAsymmetricKeyUtil.this.generateNewKeyRingTask(userName, userMail, userPassword, algorithm, keySize);
         }
     }
 
-    public boolean generateNewKeyRinTask(String userName, String userMail, String userPassword, String algorithm, int keySize) {
+    public boolean generateNewKeyRingTask(String userName, String userMail, String userPassword, String algorithm, int keySize) {
         try {
             KeyPair newKeyPair = generateNewKeyPair(algorithm, keySize, SECURITY_PROVIDER);
             KeyPair masterKeyPair = generateNewKeyPair(MASTER_KEY_ALGORITHM, MASTER_KEY_SIZE, SECURITY_PROVIDER);
