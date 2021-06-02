@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package etf.openpgp.cf170065dsd1700145d.keyGeneration;
+package etf.openpgp.cf170065dsd170145d.keyGeneration;
 
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;

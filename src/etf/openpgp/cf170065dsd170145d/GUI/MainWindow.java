@@ -1,8 +1,8 @@
-package etf.openpgp.cf170065dsd1700145d.GUI;
+package etf.openpgp.cf170065dsd170145d.GUI;
 
-import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPAsymmetricKeyUtil;
-import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPKeyExporter;
-import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPKeyInfo;
+import etf.openpgp.cf170065dsd170145d.keyGeneration.PGPAsymmetricKeyUtil;
+import etf.openpgp.cf170065dsd170145d.keyGeneration.PGPKeyExporter;
+import etf.openpgp.cf170065dsd170145d.keyGeneration.PGPKeyInfo;
 import java.awt.font.NumericShaper;
 import java.security.Security;
 import java.util.ArrayList;
@@ -22,8 +22,8 @@ import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKey;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
-import rs.ac.bg.etf.zp.ExtendedPGPException;
-import rs.ac.bg.etf.zp.PGPMessageSenderDriver;
+import etf.openpgp.cf170065dsd170145d.services.ExtendedPGPException;
+import etf.openpgp.cf170065dsd170145d.services.PGPMessageSenderDriver;
 
 /*
  * To change this license header, choose License Headers in Project Properties.

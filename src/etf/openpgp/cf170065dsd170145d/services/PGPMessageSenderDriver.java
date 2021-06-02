@@ -1,4 +1,4 @@
-package rs.ac.bg.etf.zp;
+package etf.openpgp.cf170065dsd170145d.services;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -25,7 +25,7 @@ import org.bouncycastle.openpgp.operator.PublicKeyDataDecryptorFactory;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyDataDecryptorFactoryBuilder;
 
-import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPAsymmetricKeyUtil;
+import etf.openpgp.cf170065dsd170145d.keyGeneration.PGPAsymmetricKeyUtil;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;

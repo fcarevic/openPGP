@@ -1,6 +1,6 @@
-package rs.ac.bg.etf.zp;
+package etf.openpgp.cf170065dsd170145d.services;
 
-import etf.openpgp.cf170065dsd1700145d.keyGeneration.PGPAsymmetricKeyUtil;
+import etf.openpgp.cf170065dsd170145d.keyGeneration.PGPAsymmetricKeyUtil;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;

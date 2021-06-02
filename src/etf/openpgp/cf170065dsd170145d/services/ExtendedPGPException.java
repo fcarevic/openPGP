@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package rs.ac.bg.etf.zp;
+package etf.openpgp.cf170065dsd170145d.services;
 
 /**
  *

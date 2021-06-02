@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package etf.openpgp.cf170065dsd1700145d.GUI;
+package etf.openpgp.cf170065dsd170145d.GUI;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;

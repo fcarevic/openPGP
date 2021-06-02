@@ -1,4 +1,4 @@
-package etf.openpgp.cf170065dsd1700145d.keyGeneration;
+package etf.openpgp.cf170065dsd170145d.keyGeneration;
 
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.openpgp.*;
