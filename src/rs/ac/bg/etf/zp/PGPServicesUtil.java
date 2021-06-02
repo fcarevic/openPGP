@@ -82,7 +82,7 @@ public class PGPServicesUtil {
         JcaPGPObjectFactory pgpFactory = new JcaPGPObjectFactory(data);
         Object object = pgpFactory.nextObject();
         if (!(object instanceof PGPCompressedData)) {
-            throw new ExtendedPGPException("Unable to decompress message");
+            throw new ExtendedInfoPGPException("Unable to decompress message");
         }
         return ((PGPCompressedData) object).getDataStream().readAllBytes();
     }
@@ -104,7 +104,7 @@ public class PGPServicesUtil {
         return ((ByteArrayOutputStream) outputStream).toByteArray();
     }
 
-    public static byte[] decrypt(byte[] data, char[] password) throws PGPException, IOException, ExtendedPGPException {
+    public static byte[] decrypt(byte[] data, char[] password) throws PGPException, IOException, ExtendedPGPException, ExtendedInfoPGPException {
 
         JcaPGPObjectFactory objectFactory = new JcaPGPObjectFactory(data);
         Object object = objectFactory.nextObject();
@@ -136,11 +136,11 @@ public class PGPServicesUtil {
                     InputStream decryptedStream = pbe.getDataStream(dataDecryptorFactory);
                     return decryptedStream.readAllBytes();
                 } else {
-                    throw new ExtendedPGPException("Private key not found");
+                    throw new ExtendedPGPException("Decryption private key  not found");
                 }
             }
         } else {
-            throw new ExtendedPGPException("Decryption phase error");
+            throw new ExtendedInfoPGPException("Decryption phase error");
         }
         return null;
 
@@ -181,6 +181,7 @@ public class PGPServicesUtil {
             InputStream toVerify = ((PGPLiteralData) objectFactory.nextObject()).getInputStream();
 
             onePassSignature.update(toVerify.readAllBytes());
+            
 
             PGPSignatureList signatureList = (PGPSignatureList) objectFactory.nextObject();
             PGPSignature signature = signatureList.get(0);
@@ -194,10 +195,10 @@ public class PGPServicesUtil {
 
             }
         }
-        throw new ExtendedPGPException("Verification error");
+        throw new ExtendedInfoPGPException("Verification error");
     }
 
-    public static byte[] sign(byte[] data, PGPPrivateKey privateKey, int algorithm) throws PGPException, IOException {
+    public static byte[] sign(byte[] data, PGPPrivateKey privateKey, int algorithm, String filename) throws PGPException, IOException {
 
         PGPSignatureGenerator signatureGenerator = new PGPSignatureGenerator(new JcaPGPContentSignerBuilder(algorithm, PGPUtil.SHA256).setProvider("BC"));
 
@@ -208,7 +209,7 @@ public class PGPServicesUtil {
         signatureGenerator.generateOnePassVersion(false).encode(helperStream);
 
         PGPLiteralDataGenerator lGen = new PGPLiteralDataGenerator();
-        OutputStream os = lGen.open(helperStream, PGPLiteralData.BINARY, "tmp", data.length, new Date());
+        OutputStream os = lGen.open(helperStream, PGPLiteralData.BINARY, filename, data.length, new Date());
         InputStream is = new ByteArrayInputStream(data);
 
         int ch;
@@ -230,12 +231,12 @@ public class PGPServicesUtil {
 
     }
 
-    public static byte[] generateLiteralData(byte[] data) throws IOException {
+    public static byte[] generateLiteralData(byte[] data, String filename) throws IOException {
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         BCPGOutputStream helperStream = new BCPGOutputStream(byteStream);
 
         PGPLiteralDataGenerator lGen = new PGPLiteralDataGenerator();
-        OutputStream os = lGen.open(helperStream, PGPLiteralData.BINARY, "tmp", data.length, new Date());
+        OutputStream os = lGen.open(helperStream, PGPLiteralData.BINARY, filename, data.length, new Date());
         InputStream is = new ByteArrayInputStream(data);
 
         int ch;
@@ -258,13 +259,16 @@ public class PGPServicesUtil {
     public static byte[] parseLiteralData(byte[] data) throws IOException {
         JcaPGPObjectFactory objectFactory = new JcaPGPObjectFactory(data);
         Object object = objectFactory.nextObject();
+         while(object!=null){
         if (object instanceof PGPLiteralData) {
 
             PGPLiteralData literalData = (PGPLiteralData) object;
             InputStream inputStream = literalData.getInputStream();
             return inputStream.readAllBytes();
 
-        }
+            }
+         object = objectFactory.nextObject();
+         }
 
         return data;
 
@@ -273,16 +277,17 @@ public class PGPServicesUtil {
     public static void reportError(String message) {
         System.err.println(message);
     }
-
+ 
     private static PGPPublicKey getPublicKeyByID(long id) {
         System.out.println("Public wanted id(verify signing):\t" + id);
 
-        return PGPAsymmetricKeyUtil.getPUKeyFromPURing(PGPMessageSenderDriver.util.getPUKeyRingFromPUKeyRingCollection(id));
-
+//        return PGPAsymmetricKeyUtil.getPUKeyFromPURing(PGPMessageSenderDriver.util.getPUKeyRingFromPUKeyRingCollection(id));
+            return getMasterPublicKeyByID(id);
     }
 
     private static PGPPublicKey getMasterPublicKeyByID(long id) {
         PGPPublicKeyRing puKeyRingFromPUKeyRingCollection = PGPMessageSenderDriver.util.getPUKeyRingFromPUKeyRingCollection(id);
+        if(puKeyRingFromPUKeyRingCollection==null) return null;
         return puKeyRingFromPUKeyRingCollection.getPublicKeys().next();
     }
 

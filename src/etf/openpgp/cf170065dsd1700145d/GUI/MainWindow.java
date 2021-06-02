@@ -22,6 +22,7 @@ import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKey;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
+import rs.ac.bg.etf.zp.ExtendedPGPException;
 import rs.ac.bg.etf.zp.PGPMessageSenderDriver;
 
 /*
@@ -356,6 +357,8 @@ public class MainWindow extends javax.swing.JFrame {
 
         showKeyRing.add(showSecretKeysRingRB);
         showSecretKeysRingRB.setText("Secret key ring");
+        showSecretKeysRingRB.setSelected(true);
+        showSpecificKeyRingCollection();
         showSecretKeysRingRB.setActionCommand("");
         showSecretKeysRingRB.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -798,7 +801,8 @@ public class MainWindow extends javax.swing.JFrame {
         } else {
             GUIUtil.showInfoMessage("Key successfuly deleted");
         }
-
+        pGPAsymmetricKeyUtil.saveSCKeyRingCollection();
+        showSpecificKeyRingCollection();
     }
 
     private long getIDOfSelectedKey() {
@@ -819,6 +823,7 @@ public class MainWindow extends javax.swing.JFrame {
             return;
         }
         deleteKeyFromSpecficRing(keyID);
+
     }//GEN-LAST:event_deleteKeyActionPerformed
 
     private String getUserPassword() {
@@ -1155,35 +1160,38 @@ public class MainWindow extends javax.swing.JFrame {
         msgDriver.setInputFile(inputFile);
         msgDriver.setOutputFile(outputFile);
         msgDriver.readFileToDecrypt(inputFile);
+        try {
+            msgDriver.decodeDecryptoinPhase();
 
-        msgDriver.decodeDecryptoinPhase();
-
-        boolean incorrectPassword = false;
-        msgDriver.setPassword("");
-        do {
-            incorrectPassword = false;
-            try {
-                msgDriver.decryptDecryptionPhase();
-            } catch (PGPException ex) {
-                incorrectPassword = true;
-                String password = getUserPassword();
-                if (password == null) {
-                    return;
+            boolean incorrectPassword = false;
+            msgDriver.setPassword("");
+            do {
+                incorrectPassword = false;
+                try {
+                    msgDriver.decryptDecryptionPhase();
+                } catch (PGPException ex) {
+                    incorrectPassword = true;
+                    String password = getUserPassword();
+                    if (password == null) {
+                        return;
+                    }
+                    msgDriver.setPassword(password);
                 }
-                msgDriver.setPassword(password);
-            }
-        } while (incorrectPassword);
+            } while (incorrectPassword);
 
-        msgDriver.decompressDecryptionPhase();
-        msgDriver.verifySignatureDecriptionPhase();
-        String messageAuthor = msgDriver.getMessageAuthor();
-        if (messageAuthor == null) {
-            GUIUtil.showInfoMessage("Received unsigned message");
-        } else {
-            GUIUtil.showInfoMessage("Received signed message from " + messageAuthor);
+            msgDriver.decompressDecryptionPhase();
+            msgDriver.verifySignatureDecriptionPhase();
+            String messageAuthor = msgDriver.getMessageAuthor();
+            if (messageAuthor == null) {
+                GUIUtil.showInfoMessage("Received unsigned message");
+            } else {
+                GUIUtil.showInfoMessage("Received signed message from " + messageAuthor);
+            }
+            msgDriver.literalDataDecryptionPhase();
+            msgDriver.writeToFileDecrypted(outputFile);
+        } catch (Exception e) {
+                    GUIUtil.showErrorMessage(e.toString());
         }
-        msgDriver.literalDataDecryptionPhase();
-        msgDriver.writeToFileDecrypted(outputFile);
 
     }//GEN-LAST:event_jButton9ActionPerformed
 

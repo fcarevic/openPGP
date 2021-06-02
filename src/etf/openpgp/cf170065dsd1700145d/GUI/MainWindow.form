@@ -427,7 +427,7 @@
                 <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                   <ComponentRef name="showKeyRing"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Secret key ring"/>
+                <Property name="text" type="java.lang.String" value="Secret key ring" postCode="showSecretKeysRingRB.setSelected(true);&#xa;showSpecificKeyRingCollection();"/>
                 <Property name="actionCommand" type="java.lang.String" value=""/>
               </Properties>
               <Events>

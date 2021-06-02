@@ -40,6 +40,8 @@ public class PGPKeyInfo {
 
         String[] split = userInfo.split("<");
         name = split[0];
+        email="undefined";
+        if(split.length>1)
         email = split[1].substring(0, split[1].length() - 1);
     }
 
@@ -53,6 +55,8 @@ public class PGPKeyInfo {
 
         String[] split = userInfo.split("<");
         name = split[0];
+email="undefined";
+        if(split.length>1)
         email = split[1].substring(0, split[1].length() - 1);
     }
 

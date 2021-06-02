@@ -129,7 +129,11 @@ public class PGPAsymmetricKeyUtil {
     public boolean generateNewKeyRingTask(String userName, String userMail, String userPassword, String algorithm, int keySize) {
         try {
             KeyPair newKeyPair = generateNewKeyPair(algorithm, keySize, SECURITY_PROVIDER);
-            KeyPair masterKeyPair = generateNewKeyPair(MASTER_KEY_ALGORITHM, MASTER_KEY_SIZE, SECURITY_PROVIDER);
+            int masterKeySize = MASTER_KEY_SIZE;
+            if (algorithm.equals("DSA")) {
+                masterKeySize = keySize;
+            }
+            KeyPair masterKeyPair = generateNewKeyPair(MASTER_KEY_ALGORITHM, masterKeySize, SECURITY_PROVIDER);
 
             Date currentDate = new Date();
 
@@ -171,12 +175,13 @@ public class PGPAsymmetricKeyUtil {
         while (pgpPublicKeyRingIterator.hasNext()) {
             PGPPublicKeyRing pgpPublicKeyRing = pgpPublicKeyRingIterator.next();
             Iterator<PGPPublicKey> pgpPublicKeyIterator = pgpPublicKeyRing.iterator();
+            while (pgpPublicKeyIterator.hasNext()) {
+//            pgpPublicKeyIterator.next();
+                PGPPublicKey pgpPublicKey = pgpPublicKeyIterator.next();
 
-            pgpPublicKeyIterator.next();
-            PGPPublicKey pgpPublicKey = pgpPublicKeyIterator.next();
-
-            if (pgpPublicKey.getKeyID() == publicKeyID) {
-                return pgpPublicKeyRing;
+                if (pgpPublicKey.getKeyID() == publicKeyID) {
+                    return pgpPublicKeyRing;
+                }
             }
         }
         return null;
@@ -188,11 +193,13 @@ public class PGPAsymmetricKeyUtil {
             PGPSecretKeyRing pgpSecretKeyRing = pgpSecretKeyRingIterator.next();
             Iterator<PGPSecretKey> pgpSecretKeyIterator = pgpSecretKeyRing.iterator();
 
-            pgpSecretKeyIterator.next();
-            PGPSecretKey pgpSecretKey = pgpSecretKeyIterator.next();
+            while (pgpSecretKeyIterator.hasNext()) {
+                //   pgpSecretKeyIterator.next();
+                PGPSecretKey pgpSecretKey = pgpSecretKeyIterator.next();
 
-            if (pgpSecretKey.getKeyID() == publicKeyID) {
-                return pgpSecretKeyRing;
+                if (pgpSecretKey.getKeyID() == publicKeyID) {
+                    return pgpSecretKeyRing;
+                }
             }
         }
         return null;

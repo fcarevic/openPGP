@@ -108,9 +108,12 @@ public class PGPMessageSenderDriver {
 
     public void configSignature(boolean isRequired, long privateKeyID) throws PGPException {
         if (isRequired) {
-            PGPSecretKey secretKey = PGPAsymmetricKeyUtil.getSCKeyFromSCRing(util.getSCKeyRingFromSCKeyRingCollection(privateKeyID));
+//            PGPSecretKey secretKey = PGPAsymmetricKeyUtil.getSCKeyFromSCRing(util.getSCKeyRingFromSCKeyRingCollection(privateKeyID));
+            PGPSecretKeyRing scKeyRingFromSCKeyRingCollection = util.getSCKeyRingFromSCKeyRingCollection(privateKeyID);
+            PGPSecretKey secretKey = scKeyRingFromSCKeyRingCollection.getSecretKeys().next();
             PGPPrivateKey privateKey = secretKey.extractPrivateKey(new JcePBESecretKeyDecryptorBuilder()
                     .setProvider("BC").build(password.toCharArray()));
+            System.out.println("rs.ac.bg.etf.zp.PGPMessageSenderDriver.configSignature() DSA ID: " + privateKey.getKeyID());
             this.configSignature(isRequired, privateKey.getPublicKeyPacket().getAlgorithm(), privateKey);
 
         } else {
@@ -148,9 +151,9 @@ public class PGPMessageSenderDriver {
 
     public byte[] encrypt() throws PGPException, IOException {
         if (requiresSignature) {
-            this.data = PGPServicesUtil.sign(this.data, signingKey, signingAlgorithm);
+            this.data = PGPServicesUtil.sign(this.data, signingKey, signingAlgorithm, outputFile);
         } else 
-            this.data=PGPServicesUtil.generateLiteralData(data);
+            this.data=PGPServicesUtil.generateLiteralData(data, outputFile);
         if (requiresCompression) {
             this.data = PGPServicesUtil.compress(this.data, compressionAlgorithm);
         }
@@ -176,20 +179,20 @@ public class PGPMessageSenderDriver {
     
     }
     
-    public void decryptDecryptionPhase() throws PGPException{
+    public void decryptDecryptionPhase() throws PGPException, ExtendedPGPException{
         try {
             data = PGPServicesUtil.decrypt(data, password.toCharArray());
-        } catch (IOException|ExtendedPGPException e) {
+        } catch (IOException|ExtendedInfoPGPException e) {
             // TODO Auto-generated catch block
             ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
         }
     
     }
     
-    public void decompressDecryptionPhase(){
+    public void decompressDecryptionPhase() throws Exception{
             try {
             data = PGPServicesUtil.decompress(data);
-        } catch (Exception e) {
+        } catch (ExtendedInfoPGPException e) {
             ErrorReportUtil.reportAndWriteToFile(e, outputFile, data);
         }
 
@@ -203,11 +206,11 @@ public class PGPMessageSenderDriver {
         }
 
     }
-    public void verifySignatureDecriptionPhase(){
+    public void verifySignatureDecriptionPhase() throws Exception{
     try {
             PGPServicesUtil.verifySignature(data);
             this.messageAuthor=PGPServicesUtil.extractMessageAuthor(data);
-        } catch (Exception e) {
+        } catch ( IOException| ExtendedInfoPGPException e) {
             // TODO Auto-generated catch block
             ErrorReportUtil.reportError(e);
          
