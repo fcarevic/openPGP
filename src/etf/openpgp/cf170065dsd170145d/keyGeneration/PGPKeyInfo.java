@@ -5,6 +5,9 @@
  */
 package etf.openpgp.cf170065dsd170145d.keyGeneration;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKey;
@@ -30,34 +33,49 @@ public class PGPKeyInfo {
         this.algorithm = algorithm;
     }
 
-    public PGPKeyInfo(PGPPublicKeyRing pgpPublicKeyRing) {
-        PGPPublicKey pgpPublicKey = PGPAsymmetricKeyUtil.getPUKeyFromPURing(pgpPublicKeyRing);
+    public static List<PGPKeyInfo> getPGPPublicKeyRingPGPKeyInfo(PGPPublicKeyRing pgpPublicKeyRing) {
+        List<PGPKeyInfo> pgpKeyInfos = new ArrayList<>();
+        Iterator<PGPPublicKey> iterator = pgpPublicKeyRing.iterator();
+        while (iterator.hasNext()) {
+            pgpKeyInfos.add(new PGPKeyInfo(iterator.next(), pgpPublicKeyRing.getPublicKey().getUserIDs().next()));
+        }
+        return pgpKeyInfos;
+    }
+
+    public static List<PGPKeyInfo> getPGPSecretKeyRingPGPKeyInfo(PGPSecretKeyRing pgpSecretKeyRing) {
+        List<PGPKeyInfo> pgpKeyInfos = new ArrayList<>();
+        Iterator<PGPSecretKey> iterator = pgpSecretKeyRing.iterator();
+        while (iterator.hasNext()) {
+            pgpKeyInfos.add(new PGPKeyInfo(iterator.next(), pgpSecretKeyRing.getPublicKey().getUserIDs().next()));
+        }
+        return pgpKeyInfos;
+    }
+
+    public PGPKeyInfo(PGPPublicKey pgpPublicKey, String userInfo) {
         publicKeyId = String.valueOf(pgpPublicKey.getKeyID());
         timeStamp = String.valueOf(pgpPublicKey.getCreationTime());
         algorithm = PGPAsymmetricKeyUtil.getAlgorithmByID(pgpPublicKey.getAlgorithm());
 
-        String userInfo = pgpPublicKeyRing.getPublicKey().getUserIDs().next();
-
         String[] split = userInfo.split("<");
         name = split[0];
-        email="undefined";
-        if(split.length>1)
-        email = split[1].substring(0, split[1].length() - 1);
+        email = "undefined";
+        if (split.length > 1) {
+            email = split[1].substring(0, split[1].length() - 1);
+        }
     }
 
-    public PGPKeyInfo(PGPSecretKeyRing pgpSecretKeyRing) {
-        PGPSecretKey pGPSecretKey = PGPAsymmetricKeyUtil.getSCKeyFromSCRing(pgpSecretKeyRing);
-        publicKeyId = String.valueOf(pGPSecretKey.getKeyID());
-        timeStamp = String.valueOf(pGPSecretKey.getPublicKey().getCreationTime());
-        algorithm = PGPAsymmetricKeyUtil.getAlgorithmByID(pGPSecretKey.getPublicKey().getAlgorithm());
+    public PGPKeyInfo(PGPSecretKey pgpSecretKey, String userInfo) {
 
-        String userInfo = pgpSecretKeyRing.getPublicKey().getUserIDs().next();
+        publicKeyId = String.valueOf(pgpSecretKey.getKeyID());
+        timeStamp = String.valueOf(pgpSecretKey.getPublicKey().getCreationTime());
+        algorithm = PGPAsymmetricKeyUtil.getAlgorithmByID(pgpSecretKey.getPublicKey().getAlgorithm());
 
         String[] split = userInfo.split("<");
         name = split[0];
-email="undefined";
-        if(split.length>1)
-        email = split[1].substring(0, split[1].length() - 1);
+        email = "undefined";
+        if (split.length > 1) {
+            email = split[1].substring(0, split[1].length() - 1);
+        }
     }
 
     public String getName() {

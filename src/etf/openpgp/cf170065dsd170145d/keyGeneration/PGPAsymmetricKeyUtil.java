@@ -128,7 +128,7 @@ public class PGPAsymmetricKeyUtil {
 
     public boolean generateNewKeyRingTask(String userName, String userMail, String userPassword, String algorithm, int keySize) {
         try {
-            KeyPair newKeyPair = generateNewKeyPair(algorithm, keySize, SECURITY_PROVIDER);
+
             int masterKeySize = MASTER_KEY_SIZE;
             if (algorithm.equals("DSA")) {
                 masterKeySize = keySize;
@@ -137,7 +137,6 @@ public class PGPAsymmetricKeyUtil {
 
             Date currentDate = new Date();
 
-            PGPKeyPair newPGPKeyPair = new JcaPGPKeyPair(algorithms.get(algorithm), newKeyPair, currentDate);
             PGPKeyPair masterPGPKeyPair = new JcaPGPKeyPair(algorithms.get(MASTER_KEY_ALGORITHM), masterKeyPair, currentDate);
 
             PGPDigestCalculator sha1Hash = new JcaPGPDigestCalculatorProviderBuilder().build().get(HashAlgorithmTags.SHA1);
@@ -152,8 +151,11 @@ public class PGPAsymmetricKeyUtil {
             PGPKeyRingGenerator pgpKeyRingGenerator = new PGPKeyRingGenerator(
                     PGPSignature.POSITIVE_CERTIFICATION, masterPGPKeyPair, userInfo, sha1Hash, null, null, signerBuilder, keyEncryptor);
 
-            pgpKeyRingGenerator.addSubKey(newPGPKeyPair);
-
+            if (!algorithm.equals("DSA")) {
+                KeyPair newKeyPair = generateNewKeyPair(algorithm, keySize, SECURITY_PROVIDER);
+                PGPKeyPair newPGPKeyPair = new JcaPGPKeyPair(algorithms.get(algorithm), newKeyPair, currentDate);
+                pgpKeyRingGenerator.addSubKey(newPGPKeyPair);
+            }
             PGPSecretKeyRing pgpSecretKeyRing = pgpKeyRingGenerator.generateSecretKeyRing();
             addSCKeyRingToSCRingCollection(pgpSecretKeyRing);
             try {
@@ -233,15 +235,21 @@ public class PGPAsymmetricKeyUtil {
     public static PGPPublicKey getPUKeyFromPURing(PGPPublicKeyRing pgpPublicKeyRing) {
         Iterator<PGPPublicKey> pgpPublicKeyIterator = pgpPublicKeyRing.iterator();
         PGPPublicKey masterKey = pgpPublicKeyIterator.next();
-        PGPPublicKey myKey = pgpPublicKeyIterator.next();
-        return myKey;
+         if (pgpPublicKeyIterator.hasNext()) {
+            return pgpPublicKeyIterator.next();
+        } else {
+            return masterKey;
+        }
     }
 
     public static PGPSecretKey getSCKeyFromSCRing(PGPSecretKeyRing pgpSecretKeyRing) {
         Iterator<PGPSecretKey> pgpSecretKeyIterator = pgpSecretKeyRing.iterator();
         PGPSecretKey masterKey = pgpSecretKeyIterator.next();
-        PGPSecretKey myKey = pgpSecretKeyIterator.next();
-        return myKey;
+        if (pgpSecretKeyIterator.hasNext()) {
+            return pgpSecretKeyIterator.next();
+        } else {
+            return masterKey;
+        }
     }
 
     public ArrayList<PGPPublicKeyRing> getPublicKeyRings() {
