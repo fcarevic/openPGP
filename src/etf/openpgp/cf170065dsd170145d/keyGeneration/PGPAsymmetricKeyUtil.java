@@ -1,8 +1,6 @@
 package etf.openpgp.cf170065dsd170145d.keyGeneration;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import org.bouncycastle.bcpg.HashAlgorithmTags;
 import org.bouncycastle.openpgp.*;
 import org.bouncycastle.openpgp.operator.PBESecretKeyEncryptor;
 import org.bouncycastle.openpgp.operator.PGPDigestCalculator;
@@ -14,7 +12,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.security.Signature;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -27,9 +24,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 
+/**
+ *
+ * @author Dušan Stijović
+ */
 public class PGPAsymmetricKeyUtil {
 
     private PGPSecretKeyRingCollection pgpSecretKeyRingCollection;
@@ -42,10 +42,19 @@ public class PGPAsymmetricKeyUtil {
             "ELGAMAL", PGPPublicKey.ELGAMAL_ENCRYPT
     );
 
+    /**
+     *
+     * @return Map that maps algorithm name to algorithm Enum instance
+     */
     public static Map<String, Integer> getAlgorithms() {
         return algorithms;
     }
 
+    /**
+     *
+     * @param algorithmid
+     * @return algorithm as string that corresponds to given Enum instance
+     */
     public static String getAlgorithmByID(int algorithmid) {
 
         for (Map.Entry<String, Integer> entry : algorithms.entrySet()) {
@@ -63,6 +72,9 @@ public class PGPAsymmetricKeyUtil {
     private final static String PU_KEY_RING_COLLECTION = "public.ring";
     private final static String SC_KEY_RING_COLLECTION = "secret.ring";
 
+    /**
+     *
+     */
     public PGPAsymmetricKeyUtil() {
         try {
 
@@ -96,6 +108,15 @@ public class PGPAsymmetricKeyUtil {
         pgpPublicKeyRingCollection = PGPPublicKeyRingCollection.addPublicKeyRing(pgpPublicKeyRingCollection, pgpPublicKeyRing);
     }
 
+    /**
+     *
+     * @param userName
+     * @param userMail
+     * @param userPassword
+     * @param algorithm algorithm name
+     * @param keySize key size in bits
+     * @return true if key successfully created otherwise false
+     */
     public boolean generateNewKeyRing(String userName, String userMail, String userPassword, String algorithm, int keySize) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         GenerateKeyRingTask generateNewKeyRingTask = new GenerateKeyRingTask(userName, userMail, userPassword, algorithm, keySize);
@@ -129,6 +150,15 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     *
+     * @param userName
+     * @param userMail
+     * @param userPassword
+     * @param algorithm algorithm name as string
+     * @param keySize key size in bits
+     * @return true if key successfully created otherwise false
+     */
     public boolean generateNewKeyRingTask(String userName, String userMail, String userPassword, String algorithm, int keySize) {
         try {
 
@@ -175,6 +205,11 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     *
+     * @param publicKeyID - id of public key
+     * @return Public key ring with contains key with specified id
+     */
     public PGPPublicKeyRing getPUKeyRingFromPUKeyRingCollection(long publicKeyID) {
         Iterator<PGPPublicKeyRing> pgpPublicKeyRingIterator = pgpPublicKeyRingCollection.getKeyRings();
         while (pgpPublicKeyRingIterator.hasNext()) {
@@ -192,6 +227,11 @@ public class PGPAsymmetricKeyUtil {
         return null;
     }
 
+    /**
+     *
+     * @param publicKeyID - id of public key
+     * @return Secret key ring with contains key with specified id
+     */
     public PGPSecretKeyRing getSCKeyRingFromSCKeyRingCollection(long publicKeyID) {
         Iterator<PGPSecretKeyRing> pgpSecretKeyRingIterator = pgpSecretKeyRingCollection.getKeyRings();
         while (pgpSecretKeyRingIterator.hasNext()) {
@@ -210,6 +250,13 @@ public class PGPAsymmetricKeyUtil {
         return null;
     }
 
+    /**
+     *
+     * @param publicID id of public key
+     * @param password password of private key
+     * @return true if secret key ring that contains specified key successfully
+     * deleted
+     */
     public boolean deleteSCKeyRing(long publicID, String password) {
         try {
             PGPSecretKeyRing pgpSecretKeyRing = getSCKeyRingFromSCKeyRingCollection(publicID);
@@ -226,6 +273,12 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     *
+     * @param publicID id of public key
+     * @return true if public key ring that contains specified key successfully
+     * deleted
+     */
     public boolean deletePUKeyRing(long publicID) {
         PGPPublicKeyRing pgpPublicKeyRing = getPUKeyRingFromPUKeyRingCollection(publicID);
         if (pgpPublicKeyRing == null) {
@@ -235,6 +288,11 @@ public class PGPAsymmetricKeyUtil {
         return true;
     }
 
+    /**
+     *
+     * @param pgpPublicKeyRing public key ring
+     * @return first public sub key if exist otherwise master key
+     */
     public static PGPPublicKey getPUKeyFromPURing(PGPPublicKeyRing pgpPublicKeyRing) {
         Iterator<PGPPublicKey> pgpPublicKeyIterator = pgpPublicKeyRing.iterator();
         PGPPublicKey masterKey = pgpPublicKeyIterator.next();
@@ -245,6 +303,11 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     *
+     * @param pgpSecretKeyRing
+     * @return first secret sub key if exist otherwise master key
+     */
     public static PGPSecretKey getSCKeyFromSCRing(PGPSecretKeyRing pgpSecretKeyRing) {
         Iterator<PGPSecretKey> pgpSecretKeyIterator = pgpSecretKeyRing.iterator();
         PGPSecretKey masterKey = pgpSecretKeyIterator.next();
@@ -255,6 +318,10 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     *
+     * @return list of all public key rings
+     */
     public ArrayList<PGPPublicKeyRing> getPublicKeyRings() {
         Iterator<PGPPublicKeyRing> keyRingIterator = pgpPublicKeyRingCollection.getKeyRings();
         ArrayList<PGPPublicKeyRing> pgpPublicKeys = new ArrayList<>();
@@ -264,6 +331,10 @@ public class PGPAsymmetricKeyUtil {
         return pgpPublicKeys;
     }
 
+    /**
+     *
+     * @return list of all secret key rings
+     */
     public ArrayList<PGPSecretKeyRing> getSecretKeyRings() {
         Iterator<PGPSecretKeyRing> keyRingIterator = pgpSecretKeyRingCollection.getKeyRings();
         ArrayList<PGPSecretKeyRing> pgpSecretKeys = new ArrayList<>();
@@ -273,6 +344,11 @@ public class PGPAsymmetricKeyUtil {
         return pgpSecretKeys;
     }
 
+    /**
+     *
+     * @param path absolute path of file that contains public key ring
+     * @return true if key successfully imported, otherwise false
+     */
     public boolean importKeyToPUKeyRingCollection(String path) {
         try {
             PGPPublicKeyRing pgpPublicKeyRing = PGPKeyImporter.importPUKeyRIng(path);
@@ -283,6 +359,11 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     *
+     * @param path absolute path of file that contains secret key ring
+     * @return true if key successfully imported, otherwise false
+     */
     public boolean importKeyToSCKeyRingCollection(String path) {
         try {
             PGPSecretKeyRing pgpSecretKeyRing = PGPKeyImporter.importSCKeyRing(path);
@@ -293,6 +374,14 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     * Export secret key ring containing key with specified id
+     *
+     * @param keyID id of public key in secret key ring to be exported
+     * @param path absolute path of file in which secret key ring will be
+     * exported
+     * @return true if key successfully imported, otherwise false
+     */
     public boolean exportKeyFromSCKeyRingCollection(long keyID, String path) {
         try {
             PGPSecretKeyRing pgpSecretKeyRing = getSCKeyRingFromSCKeyRingCollection(keyID);
@@ -306,6 +395,14 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     * Export public key ring containing key with specified id
+     *
+     * @param keyID id of public key in public key ring to be exported
+     * @param path absolute path of file that in which public key ring will be
+     * exported
+     * @return true if key successfully imported, otherwise false
+     */
     public boolean exportKeyFromPURingCollection(long keyID, String path) {
         try {
             PGPPublicKeyRing pgpPublicKeyRing = getPUKeyRingFromPUKeyRingCollection(keyID);
@@ -319,7 +416,15 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
-    public boolean exporPUtKeyFromSCKeyRingCollection(long keyID, String path) {
+    /**
+     * Export public key ring that corresponds to secret key ring containing key
+     * with specified id
+     *
+     * @param keyID id of public key in secret key ring to be exported
+     * @param path absolute path of file that contains public key ring
+     * @return true if key successfully imported, otherwise false
+     */
+    public boolean exporPUKeyFromSCKeyRingCollection(long keyID, String path) {
         try {
             PGPSecretKeyRing pgpSecretKeyRing = getSCKeyRingFromSCKeyRingCollection(keyID);
             if (pgpSecretKeyRing == null) {
@@ -343,6 +448,9 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     * Save all public key rings to default path
+     */
     public void savePUKeyRingCollection() {
         try {
             PGPKeyExporter.exportKeyPURingCollection(pgpPublicKeyRingCollection, PU_KEY_RING_COLLECTION);
@@ -351,6 +459,9 @@ public class PGPAsymmetricKeyUtil {
         }
     }
 
+    /**
+     * Save all secret key rings to default path
+     */
     public void saveSCKeyRingCollection() {
         try {
             PGPKeyExporter.exportKeySCRingCollection(pgpSecretKeyRingCollection, SC_KEY_RING_COLLECTION);

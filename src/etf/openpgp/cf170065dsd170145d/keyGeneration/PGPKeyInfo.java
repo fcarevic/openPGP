@@ -19,12 +19,20 @@ import org.bouncycastle.openpgp.PGPSecretKeyRing;
  */
 public class PGPKeyInfo {
 
-    private String name;
-    private String email;
-    private String publicKeyId;
-    private String timeStamp;
-    private String algorithm;
+    private final String name;
+    private final String email;
+    private final String publicKeyId;
+    private final String timeStamp;
+    private final String algorithm;
 
+    /**
+     *
+     * @param name
+     * @param email
+     * @param publicKeyId
+     * @param dateCreation
+     * @param algorithm
+     */
     public PGPKeyInfo(String name, String email, String publicKeyId, String dateCreation, String algorithm) {
         this.name = name;
         this.email = email;
@@ -33,6 +41,11 @@ public class PGPKeyInfo {
         this.algorithm = algorithm;
     }
 
+    /**
+     *
+     * @param pgpPublicKeyRing
+     * @return
+     */
     public static List<PGPKeyInfo> getPGPPublicKeyRingPGPKeyInfo(PGPPublicKeyRing pgpPublicKeyRing) {
         List<PGPKeyInfo> pgpKeyInfos = new ArrayList<>();
         Iterator<PGPPublicKey> iterator = pgpPublicKeyRing.iterator();
@@ -42,6 +55,11 @@ public class PGPKeyInfo {
         return pgpKeyInfos;
     }
 
+    /**
+     *
+     * @param pgpSecretKeyRing
+     * @return
+     */
     public static List<PGPKeyInfo> getPGPSecretKeyRingPGPKeyInfo(PGPSecretKeyRing pgpSecretKeyRing) {
         List<PGPKeyInfo> pgpKeyInfos = new ArrayList<>();
         Iterator<PGPSecretKey> iterator = pgpSecretKeyRing.iterator();
@@ -51,6 +69,11 @@ public class PGPKeyInfo {
         return pgpKeyInfos;
     }
 
+    /**
+     *
+     * @param pgpPublicKey public key from which object bill be built
+     * @param userInfo information of key owner
+     */
     public PGPKeyInfo(PGPPublicKey pgpPublicKey, String userInfo) {
         publicKeyId = String.valueOf(pgpPublicKey.getKeyID());
         timeStamp = String.valueOf(pgpPublicKey.getCreationTime());
@@ -58,12 +81,19 @@ public class PGPKeyInfo {
 
         String[] split = userInfo.split("<");
         name = split[0];
-        email = "undefined";
+
         if (split.length > 1) {
             email = split[1].substring(0, split[1].length() - 1);
+        } else {
+            email = "undefined";
         }
     }
 
+    /**
+     *
+     * @param pgpSecretKey secret key from which object bill be built
+     * @param userInfo information of key owner
+     */
     public PGPKeyInfo(PGPSecretKey pgpSecretKey, String userInfo) {
 
         publicKeyId = String.valueOf(pgpSecretKey.getKeyID());
@@ -72,28 +102,49 @@ public class PGPKeyInfo {
 
         String[] split = userInfo.split("<");
         name = split[0];
-        email = "undefined";
         if (split.length > 1) {
             email = split[1].substring(0, split[1].length() - 1);
+        } else {
+            email = "undefined";
         }
     }
 
+    /**
+     *
+     * @return name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     *
+     * @return email
+     */
     public String getEmail() {
         return email;
     }
 
+    /**
+     *
+     * @return key id
+     */
     public String getPublicKeyId() {
         return publicKeyId;
     }
 
+    /**
+     *
+     * @return creation key time
+     */
     public String getTimeStamp() {
         return timeStamp;
     }
 
+    /**
+     *
+     * @return key algorithm generation
+     */
     public String getAlgorithm() {
         return algorithm;
     }

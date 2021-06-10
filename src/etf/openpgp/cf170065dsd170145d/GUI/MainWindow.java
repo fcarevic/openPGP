@@ -1,30 +1,21 @@
 package etf.openpgp.cf170065dsd170145d.GUI;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatLightLaf;
 import etf.openpgp.cf170065dsd170145d.keyGeneration.PGPAsymmetricKeyUtil;
-import etf.openpgp.cf170065dsd170145d.keyGeneration.PGPKeyExporter;
 import etf.openpgp.cf170065dsd170145d.keyGeneration.PGPKeyInfo;
-import java.awt.font.NumericShaper;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPEncryptedData;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
-import org.bouncycastle.openpgp.PGPSecretKey;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
-import etf.openpgp.cf170065dsd170145d.services.ExtendedPGPException;
 import etf.openpgp.cf170065dsd170145d.services.PGPMessageSenderDriver;
 import java.util.Iterator;
 import org.bouncycastle.openpgp.PGPPublicKey;
@@ -943,7 +934,6 @@ public class MainWindow extends javax.swing.JFrame {
         // TODO add your handling code here:
         encrytpionMessageOptionPanel.setVisible(encryptCB.isSelected());
 
-
     }//GEN-LAST:event_encryptCBActionPerformed
 
     private void compressionCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_compressionCheckboxActionPerformed
@@ -1074,7 +1064,6 @@ public class MainWindow extends javax.swing.JFrame {
         showPublicKeysID();
         showSecretKeysID();
 
-
     }//GEN-LAST:event_showKeyRingCollectionPaneMouseClicked
 
     private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
@@ -1085,7 +1074,7 @@ public class MainWindow extends javax.swing.JFrame {
         boolean success = true;
         if (showSecretKeysRingRB.getSelectedObjects() != null) {
 
-            success = pGPAsymmetricKeyUtil.exporPUtKeyFromSCKeyRingCollection(keyID, path);
+            success = pGPAsymmetricKeyUtil.exporPUKeyFromSCKeyRingCollection(keyID, path);
         } else if (showPublicKeysRingRB.getSelectedObjects() != null) {
             success = pGPAsymmetricKeyUtil.exportKeyFromPURingCollection(keyID, path);
         }
@@ -1195,7 +1184,6 @@ public class MainWindow extends javax.swing.JFrame {
             e.printStackTrace();
         }
 
-
     }//GEN-LAST:event_jButton8ActionPerformed
 
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
@@ -1248,7 +1236,7 @@ public class MainWindow extends javax.swing.JFrame {
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
         int selectedRow = keyRingTable.getSelectedRow();
-        long id = Long.parseLong((String)keyRingTable.getModel().getValueAt(selectedRow, ColumName.KEYID.ordinal()));
+        long id = Long.parseLong((String) keyRingTable.getModel().getValueAt(selectedRow, ColumName.KEYID.ordinal()));
         List<PGPKeyInfo> pgpKeyInfos = null;
         if (showSecretKeysRingRB.isSelected()) {
             pgpKeyInfos = PGPKeyInfo.getPGPSecretKeyRingPGPKeyInfo(pGPAsymmetricKeyUtil.getSCKeyRingFromSCKeyRingCollection(id));

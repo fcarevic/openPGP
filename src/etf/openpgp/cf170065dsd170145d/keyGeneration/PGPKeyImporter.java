@@ -6,12 +6,19 @@ import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.bouncycastle.bcpg.ArmoredOutputStream;
 
+/**
+ *
+ * @author Dušan Stijović
+ */
 public class PGPKeyImporter {
 
+    /**
+     *
+     * @param path absolute path of file that contains public key ring
+     * @return imported public key ring
+     * @throws IOException
+     */
     public static PGPPublicKeyRing importPUKeyRIng(String path) throws IOException {
         try (InputStream inputStream = new FileInputStream(path);
                 InputStream decoderStream = PGPUtil.getDecoderStream(inputStream)) {
@@ -19,6 +26,13 @@ public class PGPKeyImporter {
         }
     }
 
+    /**
+     *
+     * @param path absolute path of file that contains secret key ring
+     * @return imported secret key ring
+     * @throws IOException
+     * @throws PGPException
+     */
     public static PGPSecretKeyRing importSCKeyRing(String path) throws IOException, PGPException {
         try (InputStream inputStream = new FileInputStream(path);
                 InputStream decoderStream = PGPUtil.getDecoderStream(inputStream)) {
@@ -26,6 +40,12 @@ public class PGPKeyImporter {
         }
     }
 
+    /**
+     *
+     * @param path absolute path of file that contains secret key ring
+     * collection
+     * @return imported secret key ring collection
+     */
     public static PGPSecretKeyRingCollection importSCKeyRingCollection(String path) {
         try (InputStream inputStream = new FileInputStream(path);
                 InputStream decoderStream = PGPUtil.getDecoderStream(inputStream)) {
@@ -35,6 +55,12 @@ public class PGPKeyImporter {
         }
     }
 
+    /**
+     *
+     * @param path absolute path of file that contains public key ring
+     * collection
+     * @return imported public key ring collection
+     */
     public static PGPPublicKeyRingCollection importPUKeyRingCollection(String path) {
         try (InputStream inputStream = new FileInputStream(path);
                 InputStream decoderStream = PGPUtil.getDecoderStream(inputStream)) {
