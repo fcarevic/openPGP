@@ -1,6 +1,7 @@
 package etf.openpgp.cf170065dsd170145d.keyGeneration;
 
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import org.bouncycastle.bcpg.HashAlgorithmTags;
 import org.bouncycastle.openpgp.*;
 import org.bouncycastle.openpgp.operator.PBESecretKeyEncryptor;
@@ -13,6 +14,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.Signature;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -25,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
 
 public class PGPAsymmetricKeyUtil {
@@ -139,9 +142,9 @@ public class PGPAsymmetricKeyUtil {
 
             PGPKeyPair masterPGPKeyPair = new JcaPGPKeyPair(algorithms.get(MASTER_KEY_ALGORITHM), masterKeyPair, currentDate);
 
-            PGPDigestCalculator sha1Hash = new JcaPGPDigestCalculatorProviderBuilder().build().get(HashAlgorithmTags.SHA1);
+            PGPDigestCalculator sha1Hash = new JcaPGPDigestCalculatorProviderBuilder().build().get(PGPUtil.SHA1);
 
-            JcaPGPContentSignerBuilder signerBuilder = new JcaPGPContentSignerBuilder(masterPGPKeyPair.getPublicKey().getAlgorithm(), HashAlgorithmTags.SHA1);
+            JcaPGPContentSignerBuilder signerBuilder = new JcaPGPContentSignerBuilder(masterPGPKeyPair.getPublicKey().getAlgorithm(), PGPUtil.SHA384);
 
             JcePBESecretKeyEncryptorBuilder secretKeyEncBuilder = new JcePBESecretKeyEncryptorBuilder(PGPEncryptedData.AES_256, sha1Hash);
             PBESecretKeyEncryptor keyEncryptor = secretKeyEncBuilder.setProvider(SECURITY_PROVIDER).build(userPassword.toCharArray());
@@ -155,6 +158,7 @@ public class PGPAsymmetricKeyUtil {
                 KeyPair newKeyPair = generateNewKeyPair(algorithm, keySize, SECURITY_PROVIDER);
                 PGPKeyPair newPGPKeyPair = new JcaPGPKeyPair(algorithms.get(algorithm), newKeyPair, currentDate);
                 pgpKeyRingGenerator.addSubKey(newPGPKeyPair);
+
             }
             PGPSecretKeyRing pgpSecretKeyRing = pgpKeyRingGenerator.generateSecretKeyRing();
             addSCKeyRingToSCRingCollection(pgpSecretKeyRing);
@@ -169,7 +173,6 @@ public class PGPAsymmetricKeyUtil {
         } catch (NoSuchAlgorithmException | NoSuchProviderException | PGPException e) {
             return false;
         }
-
     }
 
     public PGPPublicKeyRing getPUKeyRingFromPUKeyRingCollection(long publicKeyID) {
@@ -235,7 +238,7 @@ public class PGPAsymmetricKeyUtil {
     public static PGPPublicKey getPUKeyFromPURing(PGPPublicKeyRing pgpPublicKeyRing) {
         Iterator<PGPPublicKey> pgpPublicKeyIterator = pgpPublicKeyRing.iterator();
         PGPPublicKey masterKey = pgpPublicKeyIterator.next();
-         if (pgpPublicKeyIterator.hasNext()) {
+        if (pgpPublicKeyIterator.hasNext()) {
             return pgpPublicKeyIterator.next();
         } else {
             return masterKey;
@@ -322,10 +325,17 @@ public class PGPAsymmetricKeyUtil {
             if (pgpSecretKeyRing == null) {
                 return false;
             }
-            List<PGPPublicKey> publicKeys = new ArrayList<PGPPublicKey>();
+            List<PGPPublicKey> publicKeys = new ArrayList<>();
             pgpSecretKeyRing.getPublicKeys().forEachRemaining(publicKeys::add);
 
+            Iterator<PGPPublicKey> itextrapublic = pgpSecretKeyRing.getExtraPublicKeys();
+            while (itextrapublic.hasNext()) {
+                PGPPublicKey pub = itextrapublic.next();
+                publicKeys.add(pub);
+            }
+
             PGPPublicKeyRing pgpPublicKeyRing = new PGPPublicKeyRing(publicKeys);
+
             PGPKeyExporter.exportPUKey(pgpPublicKeyRing, path);
             return true;
         } catch (IOException ex) {
