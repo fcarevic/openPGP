@@ -30,7 +30,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+/**
+ * Driver class for PGP services
+ * @author Filip Carevic
+ *
+ */
 public class PGPMessageSenderDriver {
 
     public static PGPAsymmetricKeyUtil util;
@@ -105,7 +109,12 @@ public class PGPMessageSenderDriver {
     public void setData(byte[] data) {
         this.data = data;
     }
-
+/**
+ * configures whether signature in sending message is required
+ * @param isRequired
+ * @param privateKeyID - signign key id
+ * @throws PGPException
+ */
     public void configSignature(boolean isRequired, long privateKeyID) throws PGPException {
         if (isRequired) {
 //            PGPSecretKey secretKey = PGPAsymmetricKeyUtil.getSCKeyFromSCRing(util.getSCKeyRingFromSCKeyRingCollection(privateKeyID));
@@ -120,12 +129,23 @@ public class PGPMessageSenderDriver {
             this.requiresSignature = false;
         }
     }
-
+/**
+ * configures whether signature in sending message is required
+ * @param isRequired
+ * @param algorithm -signing algorithm
+ * @param signingKey
+ */
     public void configSignature(boolean isRequired, int algorithm, PGPPrivateKey signingKey) {
         this.requiresSignature = isRequired;
         this.signingKey = signingKey;
         this.signingAlgorithm = algorithm;
     }
+    /**
+     * configures whether encryption in sending message is required
+     * @param isRequired
+     * @param publicKeyIDs - public keys used for encryption of session key
+     * @param algorithm - symmetric algorithm used in message encryption
+     */
 
     public void configEncryption(boolean isRequired, List<Long> publicKeyIDs, int algorithm) {
         List<PGPPublicKey> publicKeysList = new LinkedList<>();
@@ -136,18 +156,34 @@ public class PGPMessageSenderDriver {
         this.configEncryption(isRequired, algorithm, publicKeysList);
 
     }
-
+/**
+ * configures whether encryption in sending message is required
+ * @param isRequired
+ * @param algorithm  -symmetric algorithm used for message encryption
+ * @param encryptionKey - public keys used for encryption of session key
+ */
     public void configEncryption(boolean isRequired, int algorithm, List<PGPPublicKey> encryptionKey) {
 
         this.requiresEncryption = isRequired;
         this.encryptionKey = encryptionKey;
         this.encryptionAlgorithm = algorithm;
     }
+    /**
+     * configures whether compression is required in message sending
+     * @param isRequired
+     * @param algorithm - compression algorithm to be used
+     */
 
     public void configCompression(boolean isRequired, int algorithm) {
         this.requiresCompression = isRequired;
         this.compressionAlgorithm = algorithm;
     }
+    /**
+     * Sending phase. Requires all PGP services to be configured before use
+     * @return processed data
+     * @throws PGPException
+     * @throws IOException
+     */
 
     public byte[] encrypt() throws PGPException, IOException {
         if (requiresSignature) {
@@ -166,7 +202,10 @@ public class PGPMessageSenderDriver {
         return this.data;
     }
 
-    
+    /**
+     * Decoding phase of receiving message
+     * Decoded data is stored in attribute - data
+     */
     
     public void decodeDecryptoinPhase(){
         try {
@@ -178,6 +217,12 @@ public class PGPMessageSenderDriver {
         }
     
     }
+    /**
+     * Decryption phase of receiving message
+     * Decrypted data is stored in attribute - data
+     * @throws PGPException
+     * @throws ExtendedPGPException
+     */
     
     public void decryptDecryptionPhase() throws PGPException, ExtendedPGPException{
         try {
@@ -188,6 +233,11 @@ public class PGPMessageSenderDriver {
         }
     
     }
+   /**
+    * Decompression phase of receiving message
+    * Decompressed data is stored in attribute - data
+    * @throws Exception
+    */
     
     public void decompressDecryptionPhase() throws Exception{
             try {
@@ -206,6 +256,10 @@ public class PGPMessageSenderDriver {
         }
 
     }
+    /**
+     * 
+     * @throws Exception -if signature not present, or similar error
+     */
     public void verifySignatureDecriptionPhase() throws Exception{
     try {
             PGPServicesUtil.verifySignature(data);
@@ -234,6 +288,11 @@ public class PGPMessageSenderDriver {
         }
     }
    
+    /**
+     * Crafts PGP message from input file
+     * @param inputFile - messate to be proccesed
+     * @param outputFile -where crafted message is stored
+     */
 
     public void encryptMessage(String inputFile, String outputFile) {
         try {

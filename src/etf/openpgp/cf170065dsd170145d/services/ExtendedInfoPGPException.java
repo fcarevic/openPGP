@@ -6,8 +6,8 @@
 package etf.openpgp.cf170065dsd170145d.services;
 
 /**
- *
- * @author Dušan
+ * Exception class
+ * @author Filip Carevic
  */
 public class ExtendedInfoPGPException extends Exception {
 

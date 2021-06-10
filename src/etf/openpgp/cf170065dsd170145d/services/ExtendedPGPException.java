@@ -6,6 +6,7 @@
 package etf.openpgp.cf170065dsd170145d.services;
 
 /**
+ * Exception class
  *
  * @author CAR
  */
